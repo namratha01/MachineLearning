@@ -33,9 +33,6 @@ class neuralNetwork:
         #Convert into a 2D Array
         inputs=numpy.array(inputs_list,ndmin=2).T
         targets=numpy.array(targets_list,ndmin=2).T
-        #Calculate signals into hidden layer
-        #Pass inputs through actiavation function
-        #outputs=self.activation_function(inputs)
         #Calculate signal into output layer
         final_inputs=numpy.dot(self.wio,inputs)
         #Pass final inputs through activation function
@@ -66,68 +63,82 @@ class neuralNetwork:
 #Network Parameters
 input_nodes=785
 output_nodes=10
-learning_rate=0.001
-epoch=10
+learning_rates=[0.1,0.01,0.001]
+epoch=50
 perf_array=[]
 epoch_array=[]
+i=220
 
-#Create a sample network
-ANetwork=neuralNetwork(input_nodes,output_nodes,learning_rate,epoch)
+for learning_rate in learning_rates:
+    perf_array=[]
+    epoch_array=[]
 
-for ep in range(epoch):
-    #Load training data
-    training_data_file=open("mnist_train.csv","r")
-    training_data_list=training_data_file.readlines()
-    training_data_file.close()
+    #Create a sample network
+    ANetwork=neuralNetwork(input_nodes,output_nodes,learning_rate,epoch)
 
-    #Train the network
-    #1. Go through all records in the training data set
-    for record in training_data_list:
-        #Split by comma
-        all_values=record.split(",")
-        #Normalize the values
-        inputs=(numpy.asfarray(all_values[1:])/255.0)
-        inputs = numpy.append(inputs,[1])
-        #Setup target values
-        targets=numpy.zeros(output_nodes)
-        targets[int(all_values[0])]=0.99
-        ANetwork.train(inputs,targets)
+    for ep in range(epoch):
+        #Load training data
+        training_data_file=open("mnist_train.csv","r")
+        training_data_list=training_data_file.readlines()
+        training_data_file.close()
 
-    #Test the network
-    test_data_file=open("mnist_test.csv","r")
-    test_data_list=test_data_file.readlines()
-    test_data_file.close()
+        #Train the network
+        #1. Go through all records in the training data set
+        for record in training_data_list:
+            #Split by comma
+            all_values=record.split(",")
+            #Normalize the values
+            inputs=(numpy.asfarray(all_values[1:])/255.0)
+            inputs = numpy.append(inputs,[1])
+            #Setup target values
+            targets=numpy.zeros(output_nodes)
+            targets[int(all_values[0])]=0.99
+            ANetwork.train(inputs,targets)
 
-    scorecard=[]
+        #Test the network
+        test_data_file=open("mnist_test.csv","r")
+        test_data_list=test_data_file.readlines()
+        test_data_file.close()
+
+        scorecard=[]
+        
+        print(ep,"epoch")
+        for record in test_data_list:
+            all_values=record.split(',')
+            correct_label=int(all_values[0])
+            #print(correct_label,"correct label")
+            inputs=(numpy.asfarray(all_values[1:])/255.0)
+            inputs = numpy.append(inputs,[1])
+            outputs=ANetwork.query(inputs)
+            label=numpy.argmax(outputs)
+            #print(label,"Network Answer")
+            if(label==correct_label):
+                scorecard.append(1)
+            else:
+                scorecard.append(0)
+
+        scorecard_array=numpy.asarray(scorecard)
+        print (scorecard_array)
+        sumval=scorecard_array.sum()
+        size=scorecard_array.size
+        perf=float(sumval/size)*100;
+        
+        perf_array.append(perf)
+        epoch_array.append(ep)
+
+        print("Performance="+str(perf)+"%")
     
-    print(ep,"epoch")
-    for record in test_data_list:
-        all_values=record.split(',')
-        correct_label=int(all_values[0])
-        #print(correct_label,"correct label")
-        inputs=(numpy.asfarray(all_values[1:])/255.0)
-        inputs = numpy.append(inputs,[1])
-        outputs=ANetwork.query(inputs)
-        label=numpy.argmax(outputs)
-        #print(label,"Network Answer")
-        if(label==correct_label):
-            scorecard.append(1)
-        else:
-            scorecard.append(0)
+    i+=1
+    plt.figure(1)
+    plt.subplot(i)
+    plt.title("Learning Rate: %s"%learning_rate)
+    plt.plot(epoch_array,perf_array)
+    plt.ylabel("Performance %")
+    plt.xlabel("Epoch")
+    plt.tight_layout()
 
-    scorecard_array=numpy.asarray(scorecard)
-    print (scorecard_array)
-    sumval=scorecard_array.sum()
-    size=scorecard_array.size
-    perf=float(sumval/size)*100;
-    
-    perf_array.append(perf)
-    epoch_array.append(ep)
-
-    print("Performance="+str(perf)+"%")
-
-plt.title("Learning Rate: 0.001")
-plt.plot(epoch_array,perf_array)
-plt.ylabel("Performance %")
-plt.xlabel("Epoch")
 plt.show()
+print "ALL DONE!"
+
+
+

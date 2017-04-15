@@ -25,6 +25,7 @@ class neuralNetwork:
         #Apply activation function
         self.activation_function= lambda x:scipy.special.expit(x)
         pass
+    
     #Train Network
     def train(self,inputs_list,targets_list):
 
@@ -44,29 +45,29 @@ class neuralNetwork:
         #Update Weights between output and input
         self.wio+=self.lrate*numpy.dot((output_errors*final_outputs*(1-final_outputs)),numpy.transpose(inputs))
         pass
+    
     #Score with Network
     def query(self,inputs_list):
         #Convert input into a 2D Array
         inputs=numpy.array(inputs_list,ndmin=2).T
-        #Calulate dot product for hidden signal input
-        #Pass hidden signals through activation function
-        #outputs=self.activation_function(inputs)
         #Calculate dot product for final layer
         final_inputs=numpy.dot(self.wio,inputs)
         #Pass final inputs through activation function
         final_outputs=self.activation_function(final_inputs)
         #print (final_outputs)
         return final_outputs
-
+        pass
 
 
 #Network Parameters
 input_nodes=785
 output_nodes=10
-learning_rates=[0.1,0.01,0.001]
-epoch=50
-perf_array=[]
-epoch_array=[]
+learning_rates=[0.1]
+epoch=5
+test_perf_array=[]
+test_epoch_array=[]
+train_perf_array=[]
+train_epoch_array=[]
 i=220
 
 for learning_rate in learning_rates:
@@ -75,7 +76,7 @@ for learning_rate in learning_rates:
 
     #Create a sample network
     ANetwork=neuralNetwork(input_nodes,output_nodes,learning_rate,epoch)
-
+    
     for ep in range(epoch):
         #Load training data
         training_data_file=open("mnist_train.csv","r")
@@ -95,12 +96,12 @@ for learning_rate in learning_rates:
             targets[int(all_values[0])]=0.99
             ANetwork.train(inputs,targets)
 
-        #Test the network
+        #Compute accuracy for test data
         test_data_file=open("mnist_test.csv","r")
         test_data_list=test_data_file.readlines()
         test_data_file.close()
 
-        scorecard=[]
+        test_scorecard=[]
         
         print(ep,"epoch")
         for record in test_data_list:
@@ -113,27 +114,63 @@ for learning_rate in learning_rates:
             label=numpy.argmax(outputs)
             #print(label,"Network Answer")
             if(label==correct_label):
-                scorecard.append(1)
+                test_scorecard.append(1)
             else:
-                scorecard.append(0)
+                test_scorecard.append(0)
 
-        scorecard_array=numpy.asarray(scorecard)
-        print (scorecard_array)
-        sumval=scorecard_array.sum()
-        size=scorecard_array.size
-        perf=float(sumval/size)*100;
+        test_scorecard_array=numpy.asarray(test_scorecard)
+        print (test_scorecard_array)
+        test_sumval=test_scorecard_array.sum()
+        test_size=test_scorecard_array.size
+        test_perf=float(test_sumval/test_size)*100;
         
-        perf_array.append(perf)
-        epoch_array.append(ep)
+        test_perf_array.append(test_perf)
+        test_epoch_array.append(ep)
 
-        print("Performance="+str(perf)+"%")
-    
+        print("Test Data Performance="+str(test_perf)+"%")
+   
+
+        #Compute accuracy for training data
+        test_data_file=open("mnist_train.csv","r")
+        test_data_list=test_data_file.readlines()
+        test_data_file.close()
+
+        train_scorecard=[]
+        
+        print(ep,"epoch")
+        for record in test_data_list:
+            all_values=record.split(',')
+            correct_label=int(all_values[0])
+            #print(correct_label,"correct label")
+            inputs=(numpy.asfarray(all_values[1:])/255.0)
+            inputs = numpy.append(inputs,[1])
+            outputs=ANetwork.query(inputs)
+            label=numpy.argmax(outputs)
+            #print(label,"Network Answer")
+            if(label==correct_label):
+                train_scorecard.append(1)
+            else:
+                train_scorecard.append(0)
+
+        train_scorecard_array=numpy.asarray(train_scorecard)
+        print (train_scorecard_array)
+        train_sumval=train_scorecard_array.sum()
+        train_size=train_scorecard_array.size
+        train_perf=float(train_sumval/train_size)*100;
+        
+        train_perf_array.append(train_perf)
+        train_epoch_array.append(ep)
+
+        print("Training Data Performance="+str(train_perf)+"%")
+
+
     i+=1
     plt.figure(1)
     plt.subplot(i)
     plt.title("Learning Rate: %s"%learning_rate)
-    plt.plot(epoch_array,perf_array)
-    plt.ylabel("Performance %")
+    plt.plot(test_epoch_array,test_perf_array,'b')
+    plt.plot(train_epoch_array,train_perf_array,'r')
+    plt.ylabel("Test Data Performance %")
     plt.xlabel("Epoch")
     plt.tight_layout()
 

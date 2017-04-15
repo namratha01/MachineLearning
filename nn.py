@@ -62,17 +62,19 @@ class neuralNetwork:
 #Network Parameters
 input_nodes=785
 output_nodes=10
-learning_rates=[0.1]
+learning_rates=[0.1,0.01,0.001]
 epoch=5
-test_perf_array=[]
-test_epoch_array=[]
-train_perf_array=[]
-train_epoch_array=[]
+#test_perf_array=[]
+#test_epoch_array=[]
+#train_perf_array=[]
+#train_epoch_array=[]
 i=220
 
 for learning_rate in learning_rates:
-    perf_array=[]
-    epoch_array=[]
+    test_perf_array=[]
+    test_epoch_array=[]
+    train_perf_array=[]
+    train_epoch_array=[]
 
     #Create a sample network
     ANetwork=neuralNetwork(input_nodes,output_nodes,learning_rate,epoch)
@@ -170,7 +172,8 @@ for learning_rate in learning_rates:
     plt.title("Learning Rate: %s"%learning_rate)
     plt.plot(test_epoch_array,test_perf_array,'b')
     plt.plot(train_epoch_array,train_perf_array,'r')
-    plt.ylabel("Test Data Performance %")
+    plt.legend()
+    plt.ylabel("Accuracy %")
     plt.xlabel("Epoch")
     plt.tight_layout()
 

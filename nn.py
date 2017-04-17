@@ -71,8 +71,8 @@ class neuralNetwork:
 #Network Parameters
 input_nodes=785
 output_nodes=10
-learning_rates=[0.1,0.01,0.001]
-epoch=50
+learning_rates=[0.1]
+epoch=5
 #test_perf_array=[]
 #test_epoch_array=[]
 #train_perf_array=[]
@@ -88,101 +88,173 @@ for learning_rate in learning_rates:
     #Create a sample network
     ANetwork=neuralNetwork(input_nodes,output_nodes,learning_rate,epoch)
     
-    for ep in range(epoch):
-        #Load training data
-        training_data_file=open("mnist_train.csv","r")
-        training_data_list=training_data_file.readlines()
-        training_data_file.close()
+    for ep in range(epoch+1):
+        if ep==0:
 
-        #Train the network
-        #1. Go through all records in the training data set
-        for record in training_data_list:
-            #Split by comma
-            all_values=record.split(",")
-            #Normalize the values
-            inputs=(numpy.asfarray(all_values[1:])/255.0)
-            inputs = numpy.append(inputs,[1])
-            #Setup target values
-            targets=numpy.zeros(output_nodes)
-            targets[int(all_values[0])]=1
-            ANetwork.train(inputs,targets)
+            #Compute accuracy for test data
+            test_data_file=open("mnist_test.csv","r")
+            test_data_list=test_data_file.readlines()
+            test_data_file.close()
 
-        #Compute accuracy for test data
-        test_data_file=open("mnist_test.csv","r")
-        test_data_list=test_data_file.readlines()
-        test_data_file.close()
+            test_scorecard=[]
+            
+            print(ep,"epoch")
+            for record in test_data_list:
+                all_values=record.split(',')
+                correct_label=int(all_values[0])
+                #print(correct_label,"correct label")
+                inputs=(numpy.asfarray(all_values[1:])/255.0)
+                inputs = numpy.append(inputs,[1])
+                outputs=ANetwork.query(inputs)
+                label=numpy.argmax(outputs)
+                #print(label,"Network Answer")
+                if(label==correct_label):
+                    test_scorecard.append(1)
+                else:
+                    test_scorecard.append(0)
 
-        test_scorecard=[]
-        
-        print(ep,"epoch")
-        for record in test_data_list:
-            all_values=record.split(',')
-            correct_label=int(all_values[0])
-            #print(correct_label,"correct label")
-            inputs=(numpy.asfarray(all_values[1:])/255.0)
-            inputs = numpy.append(inputs,[1])
-            outputs=ANetwork.query(inputs)
-            label=numpy.argmax(outputs)
-            #print(label,"Network Answer")
-            if(label==correct_label):
-                test_scorecard.append(1)
-            else:
-                test_scorecard.append(0)
+            test_scorecard_array=numpy.asarray(test_scorecard)
+            #print (test_scorecard_array)
+            test_sumval=test_scorecard_array.sum()
+            test_size=test_scorecard_array.size
+            test_perf=float(test_sumval/test_size)*100;
+            
+            test_perf_array.append(test_perf)
+            test_epoch_array.append(ep)
 
-        test_scorecard_array=numpy.asarray(test_scorecard)
-        #print (test_scorecard_array)
-        test_sumval=test_scorecard_array.sum()
-        test_size=test_scorecard_array.size
-        test_perf=float(test_sumval/test_size)*100;
-        
-        test_perf_array.append(test_perf)
-        test_epoch_array.append(ep)
+            print("Test Data Performance="+str(test_perf)+"%")
+       
 
-        print("Test Data Performance="+str(test_perf)+"%")
-   
+            #Compute accuracy for training data
+            test_data_file=open("mnist_train.csv","r")
+            test_data_list=test_data_file.readlines()
+            test_data_file.close()
 
-        #Compute accuracy for training data
-        test_data_file=open("mnist_train.csv","r")
-        test_data_list=test_data_file.readlines()
-        test_data_file.close()
+            train_scorecard=[]
+            
+            print(ep,"epoch")
+            for record in test_data_list:
+                all_values=record.split(',')
+                correct_label=int(all_values[0])
+                #print(correct_label,"correct label")
+                inputs=(numpy.asfarray(all_values[1:])/255.0)
+                inputs = numpy.append(inputs,[1])
+                outputs=ANetwork.query(inputs)
+                label=numpy.argmax(outputs)
+                #print(label,"Network Answer")
+                if(label==correct_label):
+                    train_scorecard.append(1)
+                else:
+                    train_scorecard.append(0)
 
-        train_scorecard=[]
-        
-        print(ep,"epoch")
-        for record in test_data_list:
-            all_values=record.split(',')
-            correct_label=int(all_values[0])
-            #print(correct_label,"correct label")
-            inputs=(numpy.asfarray(all_values[1:])/255.0)
-            inputs = numpy.append(inputs,[1])
-            outputs=ANetwork.query(inputs)
-            label=numpy.argmax(outputs)
-            #print(label,"Network Answer")
-            if(label==correct_label):
-                train_scorecard.append(1)
-            else:
-                train_scorecard.append(0)
+            train_scorecard_array=numpy.asarray(train_scorecard)
+            #print (train_scorecard_array)
+            train_sumval=train_scorecard_array.sum()
+            train_size=train_scorecard_array.size
+            train_perf=float(train_sumval/train_size)*100;
+            
+            train_perf_array.append(train_perf)
+            train_epoch_array.append(ep)
 
-        train_scorecard_array=numpy.asarray(train_scorecard)
-        #print (train_scorecard_array)
-        train_sumval=train_scorecard_array.sum()
-        train_size=train_scorecard_array.size
-        train_perf=float(train_sumval/train_size)*100;
-        
-        train_perf_array.append(train_perf)
-        train_epoch_array.append(ep)
+            print("Training Data Performance="+str(train_perf)+"%")
+        else:
+            #Load training data
+            training_data_file=open("mnist_train.csv","r")
+            training_data_list=training_data_file.readlines()
+            training_data_file.close()
 
-        print("Training Data Performance="+str(train_perf)+"%")
+            #Train the network
+            #1. Go through all records in the training data set
+            for record in training_data_list:
+                #Split by comma
+                all_values=record.split(",")
+                #Normalize the values
+                inputs=(numpy.asfarray(all_values[1:])/255.0)
+                inputs = numpy.append(inputs,[1])
+                #Setup target values
+                targets=numpy.zeros(output_nodes)
+                targets[int(all_values[0])]=1
+                ANetwork.train(inputs,targets)
+
+            #Compute accuracy for test data
+            test_data_file=open("mnist_test.csv","r")
+            test_data_list=test_data_file.readlines()
+            test_data_file.close()
+
+            test_scorecard=[]
+            
+            print(ep,"epoch")
+            for record in test_data_list:
+                all_values=record.split(',')
+                correct_label=int(all_values[0])
+                #print(correct_label,"correct label")
+                inputs=(numpy.asfarray(all_values[1:])/255.0)
+                inputs = numpy.append(inputs,[1])
+                outputs=ANetwork.query(inputs)
+                label=numpy.argmax(outputs)
+                #print(label,"Network Answer")
+                if(label==correct_label):
+                    test_scorecard.append(1)
+                else:
+                    test_scorecard.append(0)
+
+            test_scorecard_array=numpy.asarray(test_scorecard)
+            #print (test_scorecard_array)
+            test_sumval=test_scorecard_array.sum()
+            test_size=test_scorecard_array.size
+            test_perf=float(test_sumval/test_size)*100;
+            
+            test_perf_array.append(test_perf)
+            test_epoch_array.append(ep)
+
+            print("Test Data Performance="+str(test_perf)+"%")
+       
+
+            #Compute accuracy for training data
+            test_data_file=open("mnist_train.csv","r")
+            test_data_list=test_data_file.readlines()
+            test_data_file.close()
+
+            train_scorecard=[]
+            
+            print(ep,"epoch")
+            for record in test_data_list:
+                all_values=record.split(',')
+                correct_label=int(all_values[0])
+                #print(correct_label,"correct label")
+                inputs=(numpy.asfarray(all_values[1:])/255.0)
+                inputs = numpy.append(inputs,[1])
+                outputs=ANetwork.query(inputs)
+                label=numpy.argmax(outputs)
+                #print(label,"Network Answer")
+                if(label==correct_label):
+                    train_scorecard.append(1)
+                else:
+                    train_scorecard.append(0)
+
+            train_scorecard_array=numpy.asarray(train_scorecard)
+            #print (train_scorecard_array)
+            train_sumval=train_scorecard_array.sum()
+            train_size=train_scorecard_array.size
+            train_perf=float(train_sumval/train_size)*100;
+            
+            train_perf_array.append(train_perf)
+            train_epoch_array.append(ep)
+
+            print("Training Data Performance="+str(train_perf)+"%")
 
 
     i+=1
-    plt.figure(1)
+    plt.figure(1,figsize=(10,10))
     plt.subplot(i)
     plt.title("Learning Rate: %s"%learning_rate)
     plt.plot(test_epoch_array,test_perf_array,'b')
     plt.plot(train_epoch_array,train_perf_array,'r')
     plt.ylabel("Accuracy %")
     plt.xlabel("Epoch")
+    plt.yticks(range(0,100,10))
+    plt.xlim(0,ep)
+    plt.ylim(0,100)
     plt.tight_layout()
 
 plt.show()

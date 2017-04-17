@@ -23,9 +23,14 @@ class neuralNetwork:
         #Weight between Input and Output
         self.wio=numpy.random.choice([-0.05,0.05],(self.onodes,self.inodes))
         #Apply activation function
-        self.activation_function= lambda x:scipy.special.expit(x)
+        #self.activation_function= lambda x:scipy.special.expit(x)
+        #self.activation_function= lambda x:scipy.special.expit(x)
         pass
-    
+  
+    def activation_function(self,dot_outputs):
+        temp_array = numpy.insert(numpy.zeros((1, output_nodes-1)), numpy.argmax(dot_outputs), 1)
+        return numpy.array(temp_array,ndmin=2).T
+
     #Train Network
     def train(self,inputs_list,targets_list):
 
@@ -37,13 +42,17 @@ class neuralNetwork:
         #Calculate signal into output layer
         final_inputs=numpy.dot(self.wio,inputs)
         #Pass final inputs through activation function
-        final_outputs=self.activation_function(final_inputs)
-
+        #print "final_inputs: ",final_inputs
+        #print "final_inputs shape: ",final_inputs.shape
+        final_outputs=numpy.asarray(self.activation_function(final_inputs))
+        #print "final_outputs: ",final_outputs
+        #print "final_outputs shape: ",final_outputs.shape
+        #print "targets: ",targets
         #Calculate Error
         output_errors=targets-final_outputs
-
+        #print "output_errors: ",output_errors
         #Update Weights between output and input
-        self.wio+=self.lrate*numpy.dot((output_errors*final_outputs*(1-final_outputs)),numpy.transpose(inputs))
+        self.wio+=self.lrate*numpy.dot(output_errors,numpy.transpose(inputs))
         pass
     
     #Score with Network
@@ -63,7 +72,7 @@ class neuralNetwork:
 input_nodes=785
 output_nodes=10
 learning_rates=[0.1,0.01,0.001]
-epoch=5
+epoch=50
 #test_perf_array=[]
 #test_epoch_array=[]
 #train_perf_array=[]
@@ -95,7 +104,7 @@ for learning_rate in learning_rates:
             inputs = numpy.append(inputs,[1])
             #Setup target values
             targets=numpy.zeros(output_nodes)
-            targets[int(all_values[0])]=0.99
+            targets[int(all_values[0])]=1
             ANetwork.train(inputs,targets)
 
         #Compute accuracy for test data
@@ -121,7 +130,7 @@ for learning_rate in learning_rates:
                 test_scorecard.append(0)
 
         test_scorecard_array=numpy.asarray(test_scorecard)
-        print (test_scorecard_array)
+        #print (test_scorecard_array)
         test_sumval=test_scorecard_array.sum()
         test_size=test_scorecard_array.size
         test_perf=float(test_sumval/test_size)*100;
@@ -155,7 +164,7 @@ for learning_rate in learning_rates:
                 train_scorecard.append(0)
 
         train_scorecard_array=numpy.asarray(train_scorecard)
-        print (train_scorecard_array)
+        #print (train_scorecard_array)
         train_sumval=train_scorecard_array.sum()
         train_size=train_scorecard_array.size
         train_perf=float(train_sumval/train_size)*100;
@@ -172,7 +181,6 @@ for learning_rate in learning_rates:
     plt.title("Learning Rate: %s"%learning_rate)
     plt.plot(test_epoch_array,test_perf_array,'b')
     plt.plot(train_epoch_array,train_perf_array,'r')
-    plt.legend()
     plt.ylabel("Accuracy %")
     plt.xlabel("Epoch")
     plt.tight_layout()

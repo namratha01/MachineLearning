@@ -57,7 +57,6 @@ class neuralNetwork:
         return final_outputs
         pass
 
-
 #Network Parameters
 input_nodes=785
 output_nodes=10
@@ -85,7 +84,7 @@ for learning_rate in learning_rates:
     ANetwork=neuralNetwork(input_nodes,output_nodes,learning_rate,epoch)
     
     for ep in range(epoch+1):
-        print "epoch: ",ep
+        #print "epoch: ",ep
         if ep==0:
             #Compute accuracy for test data
             test_scorecard=[]
@@ -172,7 +171,6 @@ for learning_rate in learning_rates:
             test_perf_array.append(test_perf)
             test_epoch_array.append(ep)
             #print("Test Data Performance="+str(test_perf)+"%")
-       
 
             #Compute accuracy for training data
             train_scorecard=[]
@@ -197,8 +195,6 @@ for learning_rate in learning_rates:
             train_perf_array.append(train_perf)
             train_epoch_array.append(ep)
             #print("Training Data Performance="+str(train_perf)+"%")
-    
-
 
     #Compute accuracy for test data
     test_scorecard=[]

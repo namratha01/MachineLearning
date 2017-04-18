@@ -144,8 +144,8 @@ def compute_traindata_accuracy():
 #Network Parameters
 input_nodes=785                         #No of input pixels
 output_nodes=10                         #No of perceptrons in the Neural Network
-learning_rates=[0.1]                    #Different learning rates that we need to try
-epoch=3                                 #No of Epochs per learning rate
+learning_rates=[0.1,0.01,0.001]         #Different learning rates that we need to try
+epoch=50                                #No of Epochs per learning rate
 i=220
 
 #Initializing lists

@@ -32,7 +32,7 @@ class perceptron:
         pass
   
     def activation_function(self,dot_outputs):
-        temp_array = numpy.insert(numpy.zeros((1, output_nodes-1)), numpy.argmax(dot_outputs), 1)
+        temp_array = 1/(1+numpy.exp(dot_outputs))
         return numpy.array(temp_array,ndmin=2).T
 
     #Train Network
@@ -42,25 +42,59 @@ class perceptron:
         #Convert into a 2D Array
         inputs=numpy.array(inputs_list,ndmin=2).T
         targets=numpy.array(targets_list,ndmin=2).T
-        #Calculate signal into output layer
-        final_inputs=numpy.dot(self.wio,inputs)
+        #Calculate signal into hidden layer
+        hidden_inputs=numpy.dot(self.wih,inputs)
+        print "hidden_inputs",hidden_inputs.shape
+        #print hidden_inputs
         #Pass final inputs through activation function
-        final_outputs=numpy.asarray(self.activation_function(final_inputs))
+        hidden_outputs=self.activation_function(hidden_inputs)
+        print "hidden_outputs",hidden_outputs.shape
+        #print hidden_outputs
+        #Calculate signal into output layer
+        final_inputs=numpy.dot(self.who,hidden_outputs.T)
+        print "final_inputs",final_inputs.shape
+        #print final_inputs
+        #Pass final inputs through activation function
+        final_outputs=self.activation_function(final_inputs)
+        print "final_outputs",final_outputs.shape
+        #print final_outputs
         #Calculate Error
-        output_errors=targets-final_outputs
+        #print "targets: ",targets.shape,"final_outputs: ",final_outputs.shape
+        #output_errors=targets-final_outputs.T
+        #print "output_errors",output_errors.shape
+        #print output_errors
+        
+        delta_output = final_outputs*(1-final_outputs)*(targets-final_outputs.T) 
+        print "delta_output",delta_output.shape
+        print delta_output
+        
+        
+        #hidden_errors=numpy.dot(self.who.T,output_errors)
+        #print "who",self.who.shape
+        #print "hidden_errors",hidden_errors.shape
+        #print hidden_errors 
+        #output_error_term=final_outputs(1-final_outputs)(output_errors)
+        
         #Update Weights between output and input
-        self.wio+=self.lrate*numpy.dot(output_errors,numpy.transpose(inputs))
+        self.who+=self.lrate*numpy.dot((output_errors*final_outputs*(1-final_outputs.T)),numpy.transpose(hidden_outputs))
+        #self.wih+=self.lrate*numpy.dot(output_errors,numpy.transpose(inputs))
+        #self.who+=self.lrate*numpy.dot(output_errors,numpy.transpose(inputs))
         pass
     
     #Score with Network
     def query(self,inputs_list):
         #Convert input into a 2D Array
         inputs=numpy.array(inputs_list,ndmin=2).T
-        #Calculate dot product of inputs and weights
-        final_inputs=numpy.dot(self.wio,inputs)
+        #Calculate signal into hidden layer
+        hidden_inputs=numpy.dot(self.wih,inputs)
+        #print "hidden inputs",hidden_inputs
+        #Pass final inputs through activation function
+        hidden_outputs=self.activation_function(hidden_inputs)
+        #print "hidden outputs",hidden_outputs
+        #Calculate signal into output layer
+        final_inputs=numpy.dot(self.who,hidden_outputs.T)
         #Pass final inputs through activation function
         final_outputs=self.activation_function(final_inputs)
-        #print (final_outputs)
         return final_outputs
         pass
 
@@ -193,10 +227,9 @@ for learning_rate in learning_rates:
     for ep in range(epoch+1):
         print "Epoch: ",ep
         if ep==0:
-            print "test"
             #Computing Accuracies for test and train data
-            #compute_testdata_accuracy()
-            #compute_traindata_accuracy()
+            compute_testdata_accuracy()
+            compute_traindata_accuracy()
         else:
             #Train the network
             for record in train_data_list:
@@ -208,8 +241,8 @@ for learning_rate in learning_rates:
                 #Setup target values
                 targets=numpy.repeat(0.1,output_nodes)
                 targets[int(all_values[0])]=0.9
-                print targets
-                break
+                #print targets
+                #break
                 #Training the Neural Network with current input set
                 ANetwork.train(inputs,targets)
             

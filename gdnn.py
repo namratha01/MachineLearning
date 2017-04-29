@@ -23,17 +23,13 @@ class perceptron:
         self.nepochs=epoch
         #Weight between Input and Hidden Layer
         self.wih=numpy.random.uniform(-0.05,0.05,(self.hnodes,self.inodes))
-        #print "Weights between Input and hidden layer"
-        #print self.wih
         #Weight between Hidden Layer and Output
         self.who=numpy.random.uniform(-0.05,0.05,(self.onodes,self.hnodes))
-        #print "Weights between Hidden layer and Output"
-        #print self.who
         pass
   
     def activation_function(self,dot_outputs):
-        temp_array = 1/(1+numpy.exp(dot_outputs))
-        return numpy.array(temp_array,ndmin=2).T
+        return 1/(1+numpy.exp(dot_outputs))
+        #return numpy.array(temp_array,ndmin=2)
 
     #Train Network
     def train(self,inputs_list,targets_list):
@@ -44,41 +40,37 @@ class perceptron:
         targets=numpy.array(targets_list,ndmin=2).T
         #Calculate signal into hidden layer
         hidden_inputs=numpy.dot(self.wih,inputs)
-        print "hidden_inputs",hidden_inputs.shape
+        #print "hidden_inputs",hidden_inputs.shape
         #print hidden_inputs
         #Pass final inputs through activation function
         hidden_outputs=self.activation_function(hidden_inputs)
-        print "hidden_outputs",hidden_outputs.shape
+        #print "hidden_outputs",hidden_outputs.shape
         #print hidden_outputs
         #Calculate signal into output layer
-        final_inputs=numpy.dot(self.who,hidden_outputs.T)
-        print "final_inputs",final_inputs.shape
+        final_inputs=numpy.dot(self.who,hidden_outputs)
+        #print "final_inputs",final_inputs.shape
         #print final_inputs
         #Pass final inputs through activation function
         final_outputs=self.activation_function(final_inputs)
-        print "final_outputs",final_outputs.shape
-        #print final_outputs
         #Calculate Error
         #print "targets: ",targets.shape,"final_outputs: ",final_outputs.shape
-        #output_errors=targets-final_outputs.T
-        #print "output_errors",output_errors.shape
+        output_errors=targets-final_outputs
+        #print "output_errors",output_errors,"final_outputs: ", final_outputs.T
         #print output_errors
         
-        delta_output = final_outputs*(1-final_outputs)*(targets-final_outputs.T) 
-        print "delta_output",delta_output.shape
-        print delta_output
-        
-        
-        #hidden_errors=numpy.dot(self.who.T,output_errors)
-        #print "who",self.who.shape
-        #print "hidden_errors",hidden_errors.shape
-        #print hidden_errors 
-        #output_error_term=final_outputs(1-final_outputs)(output_errors)
+        #delta_output = numpy.multiply(final_outputs,(1-final_outputs),(output_errors.T))
+        delta_output = final_outputs*(1-final_outputs)*(output_errors)
+        #print "delta_output",delta_output.shape
+        delta_hidden = hidden_outputs*(1-hidden_outputs)*numpy.dot(self.who.T,delta_output) 
+        #print "delta_hidden: ", delta_hidden.shape
         
         #Update Weights between output and input
-        self.who+=self.lrate*numpy.dot((output_errors*final_outputs*(1-final_outputs.T)),numpy.transpose(hidden_outputs))
-        #self.wih+=self.lrate*numpy.dot(output_errors,numpy.transpose(inputs))
-        #self.who+=self.lrate*numpy.dot(output_errors,numpy.transpose(inputs))
+        #print "who: ",self.who.shape
+        self.who+=self.lrate*numpy.dot(delta_output,hidden_outputs.T)
+        #print "who: ",self.who.shape
+        #print "wih: ",self.wih.shape
+        self.wih+=self.lrate*numpy.dot(delta_hidden,inputs.T)
+        #print "wih: ",self.wih.shape
         pass
     
     #Score with Network
@@ -92,7 +84,7 @@ class perceptron:
         hidden_outputs=self.activation_function(hidden_inputs)
         #print "hidden outputs",hidden_outputs
         #Calculate signal into output layer
-        final_inputs=numpy.dot(self.who,hidden_outputs.T)
+        final_inputs=numpy.dot(self.who,hidden_outputs)
         #Pass final inputs through activation function
         final_outputs=self.activation_function(final_inputs)
         return final_outputs
@@ -119,11 +111,13 @@ def compute_testdata_accuracy(confusion=None):
         #Computing output from Neural Network
         outputs=ANetwork.query(inputs)
         #Computing Neural Network output value
+        #print "outputs :", outputs
         label=numpy.argmax(outputs)
         #Code to compute confusion matrix inputs
         if confusion is not None:    
             prediction_array.append(label)
             target_array.append(correct_label)
+        #print "label : ", label, "correct_label: ",correct_label
         if(label==correct_label):
             test_scorecard.append(1)
         else:
@@ -184,7 +178,7 @@ def compute_traindata_accuracy():
 
 #Network Parameters
 input_nodes=785                         #No of input pixels
-hidden_nodes = 100                      #No of hidden nodes in the Neural Network
+hidden_nodes = 20                      #No of hidden nodes in the Neural Network
 output_nodes=10                         #No of perceptrons in the Neural Network
 
 learning_rates=[0.1]         #Different learning rates that we need to try
@@ -239,9 +233,9 @@ for learning_rate in learning_rates:
                 inputs=(numpy.asfarray(all_values[1:])/255.0)
                 inputs = numpy.append(inputs,[1])
                 #Setup target values
-                targets=numpy.repeat(0.1,output_nodes)
-                targets[int(all_values[0])]=0.9
-                #print targets
+                targets=numpy.zeros(output_nodes)+0.1
+                targets[int(all_values[0])]=0.9   
+                #print "targets: ",targets,"target_value: ",int(all_values[0])
                 #break
                 #Training the Neural Network with current input set
                 ANetwork.train(inputs,targets)

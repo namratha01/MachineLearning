@@ -25,6 +25,9 @@ class perceptron:
         self.wih=numpy.random.uniform(-0.05,0.05,(self.hnodes,self.inodes))
         #Weight between Hidden Layer and Output
         self.who=numpy.random.uniform(-0.05,0.05,(self.onodes,self.hnodes))
+        #Initialize previous weight value arrays
+        self.wihprev = numpy.zeros(wih.shape)
+        self.whoprev = numpy.zeros(who.shape)
         pass
   
     def activation_function(self,dot_outputs):
@@ -58,7 +61,6 @@ class perceptron:
         #print "output_errors",output_errors,"final_outputs: ", final_outputs.T
         #print output_errors
         
-        #delta_output = numpy.multiply(final_outputs,(1-final_outputs),(output_errors.T))
         delta_output = final_outputs*(1-final_outputs)*(output_errors)
         #print "delta_output",delta_output.shape
         delta_hidden = hidden_outputs*(1-hidden_outputs)*numpy.dot(self.who.T,delta_output) 

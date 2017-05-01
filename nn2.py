@@ -14,12 +14,13 @@ from sklearn.metrics import *
 class perceptron:
 
     #Constructor
-    def __init__(self,inputNodes,hiddenNodes,outputNodes,learningRate,epoch):
+    def __init__(self,inputNodes,hiddenNodes,outputNodes,learningRate,momentum):
         #Setting parameters
         self.inodes=inputNodes
         self.hnodes=hiddenNodes
         self.onodes=outputNodes
         self.lrate=learningRate
+        self.momentum=momentum
         #Weight between Input and Hidden Layer
         self.wih=numpy.random.uniform(-0.05,0.05,(self.inodes,self.hnodes))
         #Weight between Hidden Layer and Output
@@ -31,11 +32,10 @@ class perceptron:
   
     def activation_function(self,dot_outputs):
         return 1/(1+numpy.exp(-dot_outputs))
-        #return numpy.array(temp_array,ndmin=2)
 
     #Train Network
     def train(self,inputs_list,targets_list):
-
+        
         #Calculate Network Outputs
         #Convert into a 2D Array
         inputs = numpy.reshape(inputs_list, (1, self.inodes))
@@ -59,8 +59,8 @@ class perceptron:
        
         hidden_outputs=numpy.array(hidden_outputs,ndmin=2)
         #Caluting delta weights
-        delta_who_current = (self.lrate*numpy.dot(hidden_outputs.T, delta_output)) + (momentum*self.delta_who_prev)
-        delta_wih_current = (self.lrate*numpy.dot(inputs.T, delta_hidden[:,:-1])) + (momentum*self.delta_wih_prev)
+        delta_who_current = (self.lrate*numpy.dot(hidden_outputs.T, delta_output)) + (self.momentum*self.delta_who_prev)
+        delta_wih_current = (self.lrate*numpy.dot(inputs.T, delta_hidden[:,:-1])) + (self.momentum*self.delta_wih_prev)
         
         #print "delta_who_current: ",delta_who_current
         #print "delta_wih_current: ",delta_wih_current
@@ -92,12 +92,13 @@ class perceptron:
         pass
 
 #Compute accuracy for test data
-def compute_testdata_accuracy(confusion=None):
+def compute_testdata_accuracy(ANetwork,confusion=None):
     #Initializing global variable access
     global test_perf_array
     global test_epoch_array
     global prediction_array
     global target_array
+    global ep
     #Test scorecard initialization
     test_scorecard=[]
     for record in test_data_list:
@@ -138,7 +139,7 @@ def compute_testdata_accuracy(confusion=None):
     test_epoch_array.append(ep)
     print("Test Data Performance="+str(test_perf)+"%")
 
-def compute_traindata_accuracy():
+def compute_traindata_accuracy(ANetwork):
     #Compute accuracy for train data
     global train_perf_array
     global train_epoch_array
@@ -177,29 +178,34 @@ def compute_traindata_accuracy():
     train_epoch_array.append(ep)
     print("Training Data Performance="+str(train_perf)+"%")
 
-def train_network():
-    for record in train_data_list:
-        #Training the Neural Network with current input set
-        #Split by comma
-        all_values=record.split(",")
-        #Normalize the values
-        inputs=(numpy.asfarray(all_values[1:])/255.0)
-        inputs = numpy.append(inputs,[1])
-        #Setup target values
-        targets=numpy.zeros(output_nodes)+0.1
-        targets[int(all_values[0])]=0.9   
-        #print "inputs: ",inputs.shape,"targets: ",targets,"target_value: ",int(all_values[0])
-        ANetwork.train(inputs,targets)
+def train_network(ANetwork,train_size=60000):
+    print "train_size: ",train_size
+    for sample,record in enumerate(train_data_list):
+        if sample <= train_size:
+            #Training the Neural Network with current input set
+            #Split by comma
+            all_values=record.split(",")
+            #Normalize the values
+            inputs=(numpy.asfarray(all_values[1:])/255.0)
+            inputs = numpy.append(inputs,[1])
+            #Setup target values
+            targets=numpy.zeros(output_nodes)+0.1
+            targets[int(all_values[0])]=0.9   
+            #print "inputs: ",inputs.shape,"targets: ",targets,"target_value: ",int(all_values[0])
+            ANetwork.train(inputs,targets)
+
+#Global parameters
+ANetwork=None
+ep=None
 
 #Network Parameters
-input_nodes=785         #No of input pixels
-hidden_nodes=100        #No of hidden nodes in the Neural Network
-output_nodes=10         #No of perceptrons in the Neural Network
-
-learning_rate=0.1       #Learning rate for this homework
-epoch=50                #No of Epochs per learning rate
+input_nodes=785                     #No of input pixels
+hidden_nodes_list=[20,50,100]       #No of hidden nodes in the Neural Network
+output_nodes=10                     #No of perceptrons in the Neural Network
+learning_rate=0.1                   #Learning rate for this homework
+epoch=50                            #No of Epochs per learning rate
 i=220
-momentum=0.9            #Momentum Value
+momentum_list=[0,0.25,0.5,0.9]      #Momentum Value
 fig=1                   
 
 #Initializing lists
@@ -222,45 +228,82 @@ train_data_file=open("mnist_train.csv","r")
 train_data_list=train_data_file.readlines()
 train_data_file.close()
 
-def core_code():
-    #Create a sample network
-    ANetwork=perceptron(input_nodes,hidden_nodes,output_nodes,learning_rate,epoch)
+def core_code(exp,train_size=60000):
+    global hidden_nodes_list
+    global ep
+    global momentum_list
+    global test_perf_array                      
+    global test_epoch_array
+    global train_perf_array
+    global train_epoch_array
+    global prediction_array
+    global target_array
+    i=220 
+    print "hidden_nodes_list: ", hidden_nodes_list, "momentum_list: ", momentum_list
 
-    for ep in range(epoch+1):
-        
-        #Initializing lists
-        print "Epoch: ",ep
-        if ep==0:
-            #Computing Accuracies for test and train data
-            compute_testdata_accuracy()
-            compute_traindata_accuracy()
-        else:
-            #Train the network
-            train_network()
+    for hidden_nodes in hidden_nodes_list:
+        for momentum in momentum_list:
+            test_perf_array=[]                      
+            test_epoch_array=[]
+            train_perf_array=[]
+            train_epoch_array=[]
+            prediction_array=[]
+            target_array=[]
             
-            #Computing Accuracies for test and train data
-            compute_testdata_accuracy()
-            compute_traindata_accuracy()
+            print "hidden_nodes: ", hidden_nodes, "momentum: ", momentum
+            #Create a sample network
+            ANetwork=perceptron(input_nodes,hidden_nodes,output_nodes,learning_rate,momentum)
+            for ep in range(epoch+1):
+                
+                #Initializing lists
+                print "Epoch: ",ep
+                if ep==0:
+                    #Computing Accuracies for test and train data
+                    compute_testdata_accuracy(ANetwork)
+                    compute_traindata_accuracy(ANetwork)
+                else:
+                    #Train the network
+                    train_network(ANetwork,train_size)
+                    
+                    #Computing Accuracies for test and train data
+                    compute_testdata_accuracy(ANetwork)
+                    compute_traindata_accuracy(ANetwork)
 
-    #Compute accuracy for test data
-    test_scorecard=[]
-    print "Computing Confusion Matrix"
-    compute_testdata_accuracy(confusion=1)
-    print(confusion_matrix(target_array, prediction_array))
+            #Compute accuracy for test data
+            test_scorecard=[]
+            print "Computing Confusion Matrix"
+            compute_testdata_accuracy(ANetwork,confusion=1)
+            print(confusion_matrix(target_array, prediction_array))
 
-    #Plotting Accuracy vs Epoch graphs for learning rates 0.1, 0.01 and 0.001
-    i+=1
-    plt.figure(1,figsize=(8,6))
-    plt.subplot(i)
-    plt.title("Learning Rate: %s"%learning_rate)
-    plt.plot(test_epoch_array,test_perf_array,label='Test Data')
-    plt.plot(train_epoch_array,train_perf_array,label='Training Data')
-    plt.legend()
-    plt.ylabel("Accuracy %")
-    plt.xlabel("Epoch")
-    plt.yticks(range(0,100,10))
-    plt.ylim(0,100)
-    plt.tight_layout()
+            #Plotting Accuracy vs Epoch graphs for learning rates 0.1, 0.01 and 0.001
+            i+=1
+            plt.figure(exp,figsize=(8,6))
+            plt.subplot(i)
+            plt.title("Hidden Units: %s, Momentum: %s"%(hidden_nodes,momentum))
+            plt.plot(test_epoch_array,test_perf_array,label='Test Data')
+            plt.plot(train_epoch_array,train_perf_array,label='Training Data')
+            plt.legend()
+            plt.ylabel("Accuracy %")
+            plt.xlabel("Epoch")
+            plt.yticks(range(0,100,10))
+            plt.ylim(0,100)
+            plt.tight_layout()
+
+#Experiment 1
+hidden_nodes_list=[20,50,100]       #No of hidden nodes in the Neural Network
+momentum_list=[0.9]                 #Momentum Value
+core_code(exp=1)
+
+#Experiment 2
+hidden_nodes_list=[100]             #No of hidden nodes in the Neural Network
+momentum_list=[0,0.25,0.5,0.9]      #Momentum Value
+core_code(exp=2)
+
+#Experiment 3
+hidden_nodes_list=[100]             #No of hidden nodes in the Neural Network
+momentum_list=[0.9]                 #Momentum Value
+core_code(exp=3,train_size=15000)
+core_code(exp=4,train_size=30000)
 
 plt.show()
 print "ALL DONE!"

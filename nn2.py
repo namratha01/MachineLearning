@@ -177,15 +177,30 @@ def compute_traindata_accuracy():
     train_epoch_array.append(ep)
     print("Training Data Performance="+str(train_perf)+"%")
 
-#Network Parameters
-input_nodes=785                 #No of input pixels
-hidden_nodes=20                 #No of hidden nodes in the Neural Network
-output_nodes=10                 #No of perceptrons in the Neural Network
+def train_network():
+    for record in train_data_list:
+        #Training the Neural Network with current input set
+        #Split by comma
+        all_values=record.split(",")
+        #Normalize the values
+        inputs=(numpy.asfarray(all_values[1:])/255.0)
+        inputs = numpy.append(inputs,[1])
+        #Setup target values
+        targets=numpy.zeros(output_nodes)+0.1
+        targets[int(all_values[0])]=0.9   
+        #print "inputs: ",inputs.shape,"targets: ",targets,"target_value: ",int(all_values[0])
+        ANetwork.train(inputs,targets)
 
-learning_rate=0.1               #Learning rate for this homework
-epoch=5                         #No of Epochs per learning rate
+#Network Parameters
+input_nodes=785         #No of input pixels
+hidden_nodes=100        #No of hidden nodes in the Neural Network
+output_nodes=10         #No of perceptrons in the Neural Network
+
+learning_rate=0.1       #Learning rate for this homework
+epoch=50                #No of Epochs per learning rate
 i=220
-momentum = 0.9                  #Momentum Value
+momentum=0.9            #Momentum Value
+fig=1                   
 
 #Initializing lists
 test_perf_array=[]                      
@@ -206,67 +221,46 @@ print "Loading Training data from csv file"
 train_data_file=open("mnist_train.csv","r")
 train_data_list=train_data_file.readlines()
 train_data_file.close()
-    
-#Create a sample network
-ANetwork=perceptron(input_nodes,hidden_nodes,output_nodes,learning_rate,epoch)
-#break 
 
-#print ANetwork.wih
-#print ANetwork.who
+def core_code():
+    #Create a sample network
+    ANetwork=perceptron(input_nodes,hidden_nodes,output_nodes,learning_rate,epoch)
 
-for ep in range(epoch+1):
-    
-    #Initializing lists
-    #test_perf_array=[]                      
-    #test_epoch_array=[]
-    #train_perf_array=[]
-    #train_epoch_array=[]
-    print "Epoch: ",ep
-    if ep==0:
-        #Computing Accuracies for test and train data
-        compute_testdata_accuracy()
-        compute_traindata_accuracy()
-    else:
-        #Train the network
-        for record in train_data_list:
-            #Training the Neural Network with current input set
-            #Split by comma
-            all_values=record.split(",")
-            #Normalize the values
-            inputs=(numpy.asfarray(all_values[1:])/255.0)
-            inputs = numpy.append(inputs,[1])
-            #Setup target values
-            targets=numpy.zeros(output_nodes)+0.1
-            targets[int(all_values[0])]=0.9   
-            #print "inputs: ",inputs.shape,"targets: ",targets,"target_value: ",int(all_values[0])
-            ANetwork.train(inputs,targets)
+    for ep in range(epoch+1):
         
-        #Computing Accuracies for test and train data
-        compute_testdata_accuracy()
-        compute_traindata_accuracy()
+        #Initializing lists
+        print "Epoch: ",ep
+        if ep==0:
+            #Computing Accuracies for test and train data
+            compute_testdata_accuracy()
+            compute_traindata_accuracy()
+        else:
+            #Train the network
+            train_network()
+            
+            #Computing Accuracies for test and train data
+            compute_testdata_accuracy()
+            compute_traindata_accuracy()
 
-    #print ANetwork.wih
-    #print ANetwork.who
+    #Compute accuracy for test data
+    test_scorecard=[]
+    print "Computing Confusion Matrix"
+    compute_testdata_accuracy(confusion=1)
+    print(confusion_matrix(target_array, prediction_array))
 
-#Compute accuracy for test data
-test_scorecard=[]
-print "Computing Confusion Matrix"
-compute_testdata_accuracy(confusion=1)
-print(confusion_matrix(target_array, prediction_array))
-
-#Plotting Accuracy vs Epoch graphs for learning rates 0.1, 0.01 and 0.001
-i+=1
-plt.figure(1,figsize=(8,6))
-plt.subplot(i)
-plt.title("Learning Rate: %s"%learning_rate)
-plt.plot(test_epoch_array,test_perf_array,label='Test Data')
-plt.plot(train_epoch_array,train_perf_array,label='Training Data')
-plt.legend()
-plt.ylabel("Accuracy %")
-plt.xlabel("Epoch")
-plt.yticks(range(0,100,10))
-plt.ylim(0,100)
-plt.tight_layout()
+    #Plotting Accuracy vs Epoch graphs for learning rates 0.1, 0.01 and 0.001
+    i+=1
+    plt.figure(1,figsize=(8,6))
+    plt.subplot(i)
+    plt.title("Learning Rate: %s"%learning_rate)
+    plt.plot(test_epoch_array,test_perf_array,label='Test Data')
+    plt.plot(train_epoch_array,train_perf_array,label='Training Data')
+    plt.legend()
+    plt.ylabel("Accuracy %")
+    plt.xlabel("Epoch")
+    plt.yticks(range(0,100,10))
+    plt.ylim(0,100)
+    plt.tight_layout()
 
 plt.show()
 print "ALL DONE!"

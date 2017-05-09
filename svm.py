@@ -1,5 +1,9 @@
 from sklearn import metrics
 from sklearn.metrics import roc_auc_score
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+from sklearn.metrics import classification_report
+from sklearn.metrics import precision_recall_fscore_support
 from sklearn.utils import shuffle
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
@@ -25,25 +29,38 @@ clf.fit(features_train,labels_train)
 pred=clf.predict(features_test)
 
 #Experiment 1
-print "Experiment 1"
+print "\nExperiment 1"
 from sklearn.metrics import accuracy_score
+#Compute accuracy
 acc=accuracy_score(pred,labels_test)
-
+print "Accuracy: ",acc
+#Computer Precision, Recall
+print "\nClassification Report"
+print classification_report(labels_test,pred)
 scores_test=clf.decision_function(features_test)
+#Calculate FPR, TPR and Thresholds
 fpr,tpr,thresholds=metrics.roc_curve(labels_test, scores_test)
+#Calculate Area Under Curve
 auc=roc_auc_score(labels_test, scores_test)
 
 pyplot.figure(1)
-pyplot.plot(fpr, tpr, color='blue', label='ROC Curve\n(area under curve = %f)' %auc,  lw=2)
-pyplot.plot([0, 1], [0, 1], color='red', lw=2, linestyle='--')
-pyplot.xlabel('\nFalse Positive Rate\n', size=18)
+pyplot.plot(fpr, tpr, label='ROC Curve\n(area under curve = %f)' %auc,  lw=2)
+pyplot.plot([0, 1],[0, 1],lw=2,linestyle='--',label='Random Guess')
+pyplot.xlabel('\nFalse Positive Rate\n')
 pyplot.ylabel('\nTrue Positive Rate\n')
-pyplot.title('Spambase Database Classified With Linear SVM\n')
+pyplot.title('\nAccuracy of SVM model trained on Spambase')
 pyplot.legend(loc='lower right')
 
 #Experiment 2
-print "Experiment 2"
+print "\nExperiment 2"
+#Get weights from model
 coefs=numpy.copy(clf.coef_)
+print "Coefficients: "
+print coefs
+top_positive_coefficients = numpy.argsort(coefs[0])[-5:]
+top_negative_coefficients = numpy.argsort(coefs[0])[:5]
+print "\nTop Positive Features: ", top_positive_coefficients
+print "Top Negative Features: ", top_negative_coefficients
 i=numpy.argmax(coefs)
 features_train_max=numpy.array(features_train[:,i],ndmin=2).T
 features_test_max=numpy.array(features_test[:,i],ndmin=2).T
@@ -56,6 +73,7 @@ for m in range(2,58):
     features_train_max=numpy.insert(features_train_max,0,features_train[:,i],axis=1)
     features_test_max=numpy.insert(features_test_max,0,features_test[:,i],axis=1)
     clf.fit(features_train_max,labels_train)
+    #Run test data throught the model
     pred=clf.predict(features_test_max)
     acc=accuracy_score(pred,labels_test)
     m_array.append(m)
@@ -72,12 +90,13 @@ pyplot.ylabel("Accuracy")
 m_array=[]
 acc_array=[]
 #Experiment 3
-print "Experiment 3"
+print "\nExperiment 3"
 for m in range(2,58):
     feature_indices=numpy.random.choice(numpy.arange(57),m,replace=0)
     features_train_max=features_train[:,feature_indices]
     features_test_max=features_test[:,feature_indices]
     clf.fit(features_train_max,labels_train)
+    #Run test data throught the model
     pred=clf.predict(features_test_max)
     acc=accuracy_score(pred,labels_test)
     m_array.append(m)
@@ -89,4 +108,5 @@ pyplot.title("Random Feature Selection")
 pyplot.plot(m_array,acc_array)
 pyplot.xlabel("m")
 pyplot.ylabel("Accuracy")
+
 pyplot.show()

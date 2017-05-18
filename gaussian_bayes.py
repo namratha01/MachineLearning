@@ -1,3 +1,5 @@
+from __future__ import division
+import math
 from sklearn import metrics
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import precision_score
@@ -21,24 +23,53 @@ labels=spam_data[:,57]
 
 print "Splitting SPAM data into training and test set"
 features_train, features_test, labels_train, labels_test = train_test_split(features,labels,test_size=0.50)
-indices=[numpy.nonzero(labels_train==0)[0],numpy.nonzero(labels_train)[0]]
-mean=numpy.transpose([numpy.mean(features_train[indices[0],:],axis=0),numpy.mean(features_train[indices[1],:],axis=0)])
-std=numpy.transpose([numpy.std(features_train[indices[0],:],axis=0),numpy.std(features_train[indices[1],:],axis=0)])
+
+
+#PART I - Classification with Gaussian Naive Bayes
+print "\nPART I - Classification with Gaussian Naive Bayes"
 
 non_spam_train = numpy.nonzero(labels_train==0)[0]
 spam_train = numpy.nonzero(labels_train==1)[0]
-print "No of spam datapoints in Training data:",len(non_spam_train)
-print "No "len(spam_train)
+print "\nNo of non-spam datapoints in Training set: ",len(non_spam_train)
+print "No of spam datapoints in Training set: ",len(spam_train)
 
 non_spam_test = numpy.nonzero(labels_test==0)[0]
 spam_test = numpy.nonzero(labels_test==1)[0]
-print len(non_spam_test)
-print len(spam_test)
+print "No of non-spam datapoints in Test set: ",len(non_spam_test)
+print "No of spam datapoints in Test set: ",len(spam_test)
 
-#PART I - Classification with Naive Bayes
+print "Computing prior probabilities"
+spam_prob=int(len(spam_train))/(int(len(spam_train))+int(len(non_spam_train)))
+non_spam_prob=int(len(non_spam_train))/(int(len(spam_train))+int(len(non_spam_train)))
+print "Spam probability: ",spam_prob
+print "Non-Spam probability: ",non_spam_prob
+logPclass = numpy.log([non_spam_prob,spam_prob])
+print logPclass
 
+indices=[numpy.nonzero(labels_train==0)[0],numpy.nonzero(labels_train)[0]]
+mean=numpy.transpose([numpy.mean(features_train[indices[0],:],axis=0),numpy.mean(features_train[indices[1],:],axis=0)])
+std=numpy.transpose([numpy.std(features_train[indices[0],:],axis=0),numpy.std(features_train[indices[1],:],axis=0)])
+zero_std = numpy.nonzero(std==0)[0]
+if (numpy.any(zero_std)):
+    numpy.place(std,std==0,0.0001)
+
+pred=[]
+for i in range(0, features_test.shape[0]):
+    denom=math.sqrt(2*numpy.pi)*std
+    num=numpy.exp(-1*(numpy.divide(numpy.power(numpy.subtract(features_test[i,:].reshape(features_test.shape[1],1),mean), 2),2*numpy.power(std, 2))))
+    pdf = numpy.divide(num,denom)
+    print numpy.where(pdf==0)
+    # Compute class prediction for the test sample
+    Class_X = numpy.argmax(logPclass+numpy.sum(numpy.nan_to_num(numpy.log(pdf)), axis=0))  
+    pred.append(Class_X)
+
+acc=accuracy_score(pred,labels_test)
+print "Accuracy: ",acc
+print "\nClassification Report"
+print classification_report(labels_test,pred)
 
 #PART II - Classification with Logistic Regression
+print "PART II - Classification with Logistic Regression"
 lrm=LogisticRegression()
 lrm=lrm.fit(features_train,labels_train)
 pred=lrm.predict(features_test)

@@ -44,7 +44,6 @@ non_spam_prob=int(len(non_spam_train))/(int(len(spam_train))+int(len(non_spam_tr
 print "Spam probability: ",spam_prob
 print "Non-Spam probability: ",non_spam_prob
 logPclass = numpy.log([non_spam_prob,spam_prob])
-print logPclass
 
 indices=[numpy.nonzero(labels_train==0)[0],numpy.nonzero(labels_train)[0]]
 mean=numpy.transpose([numpy.mean(features_train[indices[0],:],axis=0),numpy.mean(features_train[indices[1],:],axis=0)])
@@ -55,16 +54,22 @@ if (numpy.any(zero_std)):
 
 pred=[]
 for i in range(0, features_test.shape[0]):
+#for i in range(0,5):
     denom=math.sqrt(2*numpy.pi)*std
-    num=numpy.exp(-1*(numpy.divide(numpy.power(numpy.subtract(features_test[i,:].reshape(features_test.shape[1],1),mean), 2),2*numpy.power(std, 2))))
+    index=-1*(numpy.divide(numpy.power(numpy.subtract(features_test[i,:].reshape(features_test.shape[1],1),mean), 2),2*numpy.power(std, 2)))
+    num=numpy.exp(index)
+    #print "index: ", index
+    zero_num = numpy.nonzero(num==0)[0]
+    #print "num: ",num
+    if (numpy.any(zero_num)):
+        numpy.place(num,num==0,0.1e-250)
     pdf = numpy.divide(num,denom)
-    print numpy.where(pdf==0)
     # Compute class prediction for the test sample
     Class_X = numpy.argmax(logPclass+numpy.sum(numpy.nan_to_num(numpy.log(pdf)), axis=0))  
     pred.append(Class_X)
 
 acc=accuracy_score(pred,labels_test)
-print "Accuracy: ",acc
+print "\nAccuracy: ",acc
 print "\nClassification Report"
 print classification_report(labels_test,pred)
 

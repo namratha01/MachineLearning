@@ -72,9 +72,11 @@ acc=accuracy_score(pred,labels_test)
 print "\nAccuracy: ",acc
 print "\nClassification Report"
 print classification_report(labels_test,pred)
+print "Confusion matrix"
+print confusion_matrix(labels_test,pred)
 
 #PART II - Classification with Logistic Regression
-print "PART II - Classification with Logistic Regression"
+print "\nPART II - Classification with Logistic Regression"
 lrm=LogisticRegression()
 lrm=lrm.fit(features_train,labels_train)
 pred=lrm.predict(features_test)

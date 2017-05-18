@@ -81,6 +81,8 @@ print "\nPART II - Classification with Logistic Regression"
 lrm=LogisticRegression()
 lrm=lrm.fit(features_train,labels_train)
 pred=lrm.predict(features_test)
+parameters=lrm.get_params()
+print "Parameters: ",parameters
 acc=accuracy_score(pred,labels_test)
 #Compute Precision, Recall
 print "\nClassification Report"

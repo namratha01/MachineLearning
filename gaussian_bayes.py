@@ -25,6 +25,15 @@ indices=[numpy.nonzero(labels_train==0)[0],numpy.nonzero(labels_train)[0]]
 mean=numpy.transpose([numpy.mean(features_train[indices[0],:],axis=0),numpy.mean(features_train[indices[1],:],axis=0)])
 std=numpy.transpose([numpy.std(features_train[indices[0],:],axis=0),numpy.std(features_train[indices[1],:],axis=0)])
 
+non_spam_train = numpy.nonzero(labels_train==0)[0]
+spam_train = numpy.nonzero(labels_train==1)[0]
+print "No of spam datapoints in Training data:",len(non_spam_train)
+print "No "len(spam_train)
+
+non_spam_test = numpy.nonzero(labels_test==0)[0]
+spam_test = numpy.nonzero(labels_test==1)[0]
+print len(non_spam_test)
+print len(spam_test)
 
 #PART I - Classification with Naive Bayes
 

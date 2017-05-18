@@ -61,6 +61,7 @@ for i in range(0, features_test.shape[0]):
     #print "index: ", index
     zero_num = numpy.nonzero(num==0)[0]
     #print "num: ",num
+    #HACK TO WORK AROUND THE RUNTIME DIVIDE BY ZERO WARNING. LIMITATION DUE TO numpy.exp function giving a 0 for very high index values
     if (numpy.any(zero_num)):
         numpy.place(num,num==0,0.1e-250)
     pdf = numpy.divide(num,denom)

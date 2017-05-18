@@ -66,8 +66,8 @@ for i in range(0, features_test.shape[0]):
         numpy.place(num,num==0,0.1e-250)
     pdf = numpy.divide(num,denom)
     # Compute class prediction for the test sample
-    Class_X = numpy.argmax(logPclass+numpy.sum(numpy.nan_to_num(numpy.log(pdf)), axis=0))  
-    pred.append(Class_X)
+    prediction = numpy.argmax(logPclass+numpy.sum(numpy.nan_to_num(numpy.log(pdf)), axis=0))  
+    pred.append(prediction)
 
 acc=accuracy_score(pred,labels_test)
 print "\nAccuracy: ",acc

@@ -5,6 +5,7 @@
 
 #Imports
 import numpy
+import sys
 
 no_of_clusters=10
 train_data_list=[]
@@ -37,15 +38,16 @@ def distance(datapoint,center):
 #Find the closest center to the datapoint
 def closest_center(datapoint,centers,k=10):
     distance_array=[distance(datapoint,centers[i]) for i in range(0,k)]
-    print distance_array
+    #print distance_array
     min_dist=numpy.argmin(distance_array)
-    print min_dist
-
+    #print min_dist
+    return min_dist
 
 #
 def k_means_clustering(k):
     global train_data_list
     centers=initialize_centers(k) 
+    #print numpy.asarray(centers).shape
     optimzed=False
 
     while optimzed is False:
@@ -55,14 +57,25 @@ def k_means_clustering(k):
         for datapoint in train_data_list:
             #print len(datapoint)
             #print datapoint
-            closest_centers.append(closest_center(numpy.asarray(datapoint[-1]),numpy.asarray(centers)))
+            closest_centers.append(closest_center(numpy.asarray(datapoint),numpy.asarray(centers)))
         #Initialize cluster lists
         clusters=[[] for i in range(no_of_clusters)]
         #Append datapoints to appropriate cluster lists
         for i in range(len(closest_centers)):
             clusters[closest_centers[i]].append(i)
 
+        #print clusters
         #Compute centroid for each cluster
+        datasum=[[0 for i in range(64)] for i in range(no_of_clusters)]
+        for idx,cluster in enumerate(clusters):
+            for datapoint in cluster:
+                datasum[idx]=datasum[idx]+train_data_list[datapoint]
+        #print numpy.asarray(datasum).shape   
+        #print datasum
+        centroids=numpy.true_divide(datasum,64)
+        #print numpy.asarray(centroids).shape
+        #print centroids
+        sys.exit(1)
 
 
 #Main function
@@ -73,6 +86,6 @@ def main():
 
 
 if __name__ == "__main__":
-        main()
+    main()
 
 

@@ -6,20 +6,23 @@
 #Imports
 import numpy
 
+no_of_clusters=10
+train_data_list=[]
+test_data_list=[]
 
 #Loading Training Data
-def load_training_data(self):
+def load_training_data():
+    global train_data_list
     print "Loading Training data from optdigits.train"
-    train_data=open("optdigits.train","r")
-    train_data_list=train_data.readlines()
-    train_data.close()
+    train_data=numpy.loadtxt('optdigits.train', delimiter=',')
+    train_data_list=train_data[:,:-1]
 
 #Loading Test Data
-def load_test_data(self):
+def load_test_data():
+    global test_data_list
     print "Loading Test data from optdigits.test"
-    test_data=open("optdigits.test","r")
-    test_data_list=test_data.readlines()
-    test_data.close()
+    test_data=numpy.loadtxt('optdigits.test', delimiter=',')
+    test_data_list=test_data[:,:-1]
 
 #Initialize center 
 def initialize_centers(k):
@@ -41,7 +44,26 @@ def closest_center(datapoint,centers,k=10):
 
 #
 def k_means_clustering(k):
-   centers=initialize_centers(k) 
+    global train_data_list
+    centers=initialize_centers(k) 
+    optimzed=False
+
+    while optimzed is False:
+        #Initialize list for closest center for each datapoint
+        closest_centers=[]
+        #Find closest center for each datapoint
+        for datapoint in train_data_list:
+            #print len(datapoint)
+            #print datapoint
+            closest_centers.append(closest_center(numpy.asarray(datapoint[-1]),numpy.asarray(centers)))
+        #Initialize cluster lists
+        clusters=[[] for i in range(no_of_clusters)]
+        #Append datapoints to appropriate cluster lists
+        for i in range(len(closest_centers)):
+            clusters[closest_centers[i]].append(i)
+
+        #Compute centroid for each cluster
+
 
 #Main function
 def main():

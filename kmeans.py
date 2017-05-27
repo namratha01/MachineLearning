@@ -4,6 +4,7 @@
 """
 
 #Imports
+from __future__ import division
 import numpy
 import sys
 
@@ -36,47 +37,60 @@ def distance(datapoint,center):
     return numpy.sqrt(sum(sq))
 
 #Find the closest center to the datapoint
-def closest_center(datapoint,centers,k=10):
-    distance_array=[distance(datapoint,centers[i]) for i in range(0,k)]
-    #print distance_array
-    min_dist=numpy.argmin(distance_array)
-    #print min_dist
-    return min_dist
+def closest_center(datapoint,centers,no_of_clusters=10):
+    distance_array = list()
+    for center in centers:
+        distance_array.append(distance(datapoint, center))
+    first_min_distance = numpy.argmin(distance_array)
+
+    min_distances = list()
+    for i in range(len(distance_array)):
+        if distance_array[i] - distance_array[first_min_distance] < 10 ** -10:
+            min_distances.append(i)
+    return numpy.random.choice(min_distances)
+
+def centers_check(old_centers, centers):
+    difference = 0
+    for old_center, new_center in zip(old_centers, centers):
+        difference += numpy.sum(numpy.abs(numpy.array(old_center) - numpy.array(new_center)))
+    print difference
+    if difference < 10 ** -1:
+        return True
+    else:
+        return False
 
 #
 def k_means_clustering(k):
     global train_data_list
     centers=initialize_centers(k) 
-    #print numpy.asarray(centers).shape
-    optimzed=False
+    optimized=False
 
-    while optimzed is False:
+    while optimized is False:
         #Initialize list for closest center for each datapoint
         closest_centers=[]
         #Find closest center for each datapoint
         for datapoint in train_data_list:
-            #print len(datapoint)
-            #print datapoint
             closest_centers.append(closest_center(numpy.asarray(datapoint),numpy.asarray(centers)))
         #Initialize cluster lists
-        clusters=[[] for i in range(no_of_clusters)]
+        clusters=[[] for i in range(k)]
         #Append datapoints to appropriate cluster lists
         for i in range(len(closest_centers)):
             clusters[closest_centers[i]].append(i)
 
-        #print clusters
-        #Compute centroid for each cluster
-        datasum=[[0 for i in range(64)] for i in range(no_of_clusters)]
-        for idx,cluster in enumerate(clusters):
-            for datapoint in cluster:
-                datasum[idx]=datasum[idx]+train_data_list[datapoint]
-        #print numpy.asarray(datasum).shape   
-        #print datasum
-        centroids=numpy.true_divide(datasum,64)
-        #print numpy.asarray(centroids).shape
-        #print centroids
-        sys.exit(1)
+        #Centroid Computation
+        centroids = []
+        for cluster in clusters:
+            mean_vector = numpy.array([0.0 for i in range(64)])
+            for i in range(len(cluster)):
+                mean_vector += numpy.array((train_data_list[cluster[i]]))
+            if len(cluster) > 0:
+                mean_vector /= float(len(cluster))
+            centroids.append(mean_vector)
 
+        # 5: Reassign each center to the centroid's location.
+        old_centers = centers
+        centers = centroids
+        optimized = centers_check(old_centers, centers)
 
 #Main function
 def main():

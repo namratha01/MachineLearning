@@ -5,26 +5,34 @@
 
 #Imports
 from __future__ import division
+import itertools
 import numpy
 import sys
 
 no_of_clusters=10
+no_of_classes=10
 train_data_list=[]
 test_data_list=[]
+train_data_labels=[]
+test_data_labels=[]
 
 #Loading Training Data
 def load_training_data():
     global train_data_list
+    global train_data_labels
     print "Loading Training data from optdigits.train"
     train_data=numpy.loadtxt('optdigits.train', delimiter=',')
     train_data_list=train_data[:,:-1]
+    train_data_labels=train_data[:,-1]
 
 #Loading Test Data
 def load_test_data():
     global test_data_list
+    global test_data_labels
     print "Loading Test data from optdigits.test"
     test_data=numpy.loadtxt('optdigits.test', delimiter=',')
     test_data_list=test_data[:,:-1]
+    test_data_labels=test_data[:,-1]
 
 #Initialize center 
 def initialize_centers(k):
@@ -53,11 +61,54 @@ def centers_check(old_centers, centers):
     difference = 0
     for old_center, new_center in zip(old_centers, centers):
         difference += numpy.sum(numpy.abs(numpy.array(old_center) - numpy.array(new_center)))
-    print difference
+    #print difference
     if difference < 10 ** -1:
         return True
     else:
         return False
+
+def sum_squared_error(clusters,centers,train_data_list):
+    error=0
+    for center,cluster in zip(centers,clusters):
+        for datapoint_idx in cluster:
+            datapoint=train_data_list[datapoint_idx]
+            error+=distance(datapoint,center)**2
+    return error
+
+def sum_squared_separation(clusters,centers):
+    pairs=itertools.combinations([i for i in range(no_of_clusters)],2)
+    separation=0
+    for pair in pairs:
+        separation+=distance(centers[pair[0]],centers[pair[1]])**2
+    return separation
+
+def entropy(cluster,labels):
+    global no_of_classes
+    entropy_sum=0
+    class_representation_in_cluster = [0 for i in range(no_of_classes)]
+    total_instances = len(cluster)
+
+    if total_instances == 0:
+        return 0
+    for datapoint in cluster:
+        class_representation_in_cluster[int(labels[datapoint])] += 1
+    class_ratios = [float(class_representation_in_cluster[i]) / total_instances
+                    for i in range(no_of_classes)]
+    for i in range(no_of_classes):
+        if class_representation_in_cluster[i] < 1:
+            product = 0.0
+        else:
+            product = class_ratios[i] * numpy.log2(class_ratios[i])
+        entropy_sum += product
+    return -1 * entropy_sum
+
+def mean_entropy(clusters,labels):
+    datapoint_per_cluster=[len(cluster) for cluster in clusters]
+    no_of_datapoints=sum(datapoint_per_cluster)
+    ratio_array=[float(datapoint_per_cluster[i])/no_of_datapoints for i in range(no_of_clusters)]
+    weighted_entropies=[ratio_array[i]*entropy(clusters[i],labels) for i in range(no_of_clusters)]
+    mean=float(sum(weighted_entropies))/len(weighted_entropies)
+    return mean
 
 #
 def k_means_clustering(k):
@@ -91,6 +142,13 @@ def k_means_clustering(k):
         old_centers = centers
         centers = centroids
         optimized = centers_check(old_centers, centers)
+
+    sse=sum_squared_error(clusters,centers,train_data_list)
+    print "Sum Squared Error: ",sse
+    sss=sum_squared_separation(clusters,centers)
+    print "Sum Squared Separation: ",sss
+    average_entropy = mean_entropy(clusters, train_data_labels)
+    print "Mean Entropy: ",average_entropy
 
 #Main function
 def main():

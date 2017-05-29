@@ -168,6 +168,18 @@ def draw_center_as_bitmap(name_prefix,center_number,center):
     name = name_prefix + str(center_number) + '.png'
     img.save(name)
 
+def record_cluster_labels(filename,cluster_labels):
+    cluster_labels_recorder = open(filename, 'w')
+    cluster_labels_recorder.write('Labels of each cluster:\n')
+    for i in range(len(cluster_labels)):
+        if cluster_labels[i] is not None:
+            cluster_labels_recorder.write('Cluster %d\'s label is %d\n' %
+                                          (i, cluster_labels[i]))
+        elif cluster_labels[i] is None:
+            cluster_labels_recorder.write('Cluster %d\'s label is None\n' %
+                                          (i))
+
+
 #
 def k_means_clustering(k,no_of_trials):
     global train_data_list
@@ -180,7 +192,7 @@ def k_means_clustering(k,no_of_trials):
     for trial in range(no_of_trials):
         centers=initialize_centers(k) 
         optimized=False
-        print "Trial: #%d"%(trial+1)
+        print "Optimizing Cluster Centers for Trial: #%d"%(trial+1)
         while optimized is False:
             #Initialize list for closest center for each datapoint
             closest_centers=[]
@@ -194,24 +206,13 @@ def k_means_clustering(k,no_of_trials):
                 clusters[closest_centers[i]].append(i)
 
             #Centroid Computation
-            #datasum=[[0 for i in range(64)] for i in range(no_of_clusters)]
-            #centroids=[[0 for i in range(64)] for i in range(no_of_clusters)]
-            #for idx,cluster in enumerate(clusters):
-            #    for datapoint in cluster:
-            #        datasum[idx]=datasum[idx]+train_data_list[datapoint]
-            #    if sum(datasum[idx])!=0:
-            #        centroids[idx]=numpy.true_divide(datasum[idx],len(cluster))
-
-            centroids = []
-            for cluster in clusters:
-                mean_vector = numpy.array([0.0 for i in range(64)])  # sum feature
-                # values
-                for i in range(len(cluster)):
-                    # sum the features
-                    mean_vector += numpy.array((train_data_list[cluster[i]]))
-                if len(cluster) > 0:
-                    mean_vector /= float(len(cluster))
-                centroids.append(mean_vector)
+            datasum=[[0 for i in range(64)] for i in range(no_of_clusters)]
+            centroids=[[0 for i in range(64)] for i in range(no_of_clusters)]
+            for idx,cluster in enumerate(clusters):
+                for datapoint in cluster:
+                    datasum[idx]=datasum[idx]+train_data_list[datapoint]
+                if sum(datasum[idx])!=0:
+                    centroids[idx]=numpy.true_divide(datasum[idx],len(cluster))
 
             # 5: Reassign each center to the centroid's location.
             old_centers = numpy.asarray(centers)
@@ -239,8 +240,7 @@ def k_means_clustering(k,no_of_trials):
     best_clusters=clusters_array[best_trial_idx]
         
     for i in range(no_of_clusters):
-        print "center: ",best_centers[i]
-        draw_center_as_bitmap('exp_%d_center_'%no_of_clusters,i,best_centers[i])
+        draw_center_as_bitmap('K%d_center_'%no_of_clusters,i,best_centers[i])
     
     cluster_labels=[most_popular_class(cluster,train_data_labels) for cluster in best_clusters]
     classifications=[classify(best_centers,cluster_labels,datapoint) for datapoint in test_data_list]
@@ -250,6 +250,9 @@ def k_means_clustering(k,no_of_trials):
 
     accuracy_value=accuracy(confusion_matrix)
     print "Accuracy: ",accuracy_value
+   
+    record_cluster_labels('exp_%d_cluster_labels.txt'%no_of_clusters,cluster_labels)
+
 
 #Main function
 def main():
@@ -258,9 +261,11 @@ def main():
     load_training_data()
     load_test_data()
     #Experiment 1
+    print "\nExperiment 1: Classification with 10 clusters"
     no_of_clusters=10
     k_means_clustering(no_of_clusters,no_of_trials)
     #Experiment 2
+    print "\nExperiment 2: Classification with 30 clusters"
     no_of_clusters=30
     k_means_clustering(no_of_clusters,no_of_trials)
 

@@ -11,6 +11,7 @@ import sys
 
 no_of_clusters=10
 no_of_classes=10
+no_of_trials=5
 train_data_list=[]
 test_data_list=[]
 train_data_labels=[]
@@ -110,51 +111,129 @@ def mean_entropy(clusters,labels):
     mean=float(sum(weighted_entropies))/len(weighted_entropies)
     return mean
 
+def most_popular_class(cluster,labels):
+    class_representation_in_cluster = [0 for i in range(no_of_classes)]
+    total_instances = len(cluster)
+    if total_instances == 0:
+        return None
+    for point in cluster:
+        class_representation_in_cluster[int(labels[int(point)])]+=1
+    most_popular_count = max(class_representation_in_cluster)
+    first_most_popular_index = class_representation_in_cluster.index(most_popular_count)
+    if class_representation_in_cluster.count(most_popular_count) is 1:
+        return first_most_popular_index
+    else:
+        indices_of_tied_classes = []
+        for c in class_representation_in_cluster:
+            if c == most_popular_count:
+                indices_of_tied_classes.append(
+                    class_representation_in_cluster.index(c))
+        return numpy.random.choice(indices_of_tied_classes)
+
+def classify(centers,cluster_labels,datapoint):
+    closest = closest_center(datapoint,centers)
+    return cluster_labels[closest]
+
+def create_confusion_matrix(classifications,test_data_labels):
+    confusion_matrix=[[0 for i in range(no_of_classes)] for i in range(no_of_classes)]
+    for label,classification in zip(test_data_labels,classifications):
+        confusion_matrix[int(label)][int(classification)]+=1
+    return confusion_matrix
+
+def save_confusion_matrix(confusion_matrix):
+    filename='confusion_matrix_%d_clusters.csv'%(no_of_clusters)
+    output = open(filename,'w')
+    for row in confusion_matrix:
+        for col in row:
+            output.write(str(col) + ',')
+        output.write('\n')
+    output.close()
+
+def accuracy(confusion_matrix):
+    m = numpy.array(confusion_matrix)
+    return float(numpy.sum(numpy.diagonal(m))) / numpy.sum(m)
+
 #
-def k_means_clustering(k):
+def k_means_clustering(k,no_of_trials):
     global train_data_list
-    centers=initialize_centers(k) 
-    optimized=False
+    sse_array=[]
+    sss_array=[]
+    average_entropy_array=[]
+    centers_array=[]
+    clusters_array=[]
 
-    while optimized is False:
-        #Initialize list for closest center for each datapoint
-        closest_centers=[]
-        #Find closest center for each datapoint
-        for datapoint in train_data_list:
-            closest_centers.append(closest_center(numpy.asarray(datapoint),numpy.asarray(centers)))
-        #Initialize cluster lists
-        clusters=[[] for i in range(k)]
-        #Append datapoints to appropriate cluster lists
-        for i in range(len(closest_centers)):
-            clusters[closest_centers[i]].append(i)
+    for trial in range(no_of_trials):
+        centers=initialize_centers(k) 
+        optimized=False
+        print "Trial: #%d"%(trial+1)
+        while optimized is False:
+            #Initialize list for closest center for each datapoint
+            closest_centers=[]
+            #Find closest center for each datapoint
+            for datapoint in train_data_list:
+                closest_centers.append(closest_center(numpy.asarray(datapoint),numpy.asarray(centers)))
+            #Initialize cluster lists
+            clusters=[[] for i in range(k)]
+            #Append datapoints to appropriate cluster lists
+            for i in range(len(closest_centers)):
+                clusters[closest_centers[i]].append(i)
 
-        #Centroid Computation
-        centroids = []
-        for cluster in clusters:
-            mean_vector = numpy.array([0.0 for i in range(64)])
-            for i in range(len(cluster)):
-                mean_vector += numpy.array((train_data_list[cluster[i]]))
-            if len(cluster) > 0:
-                mean_vector /= float(len(cluster))
-            centroids.append(mean_vector)
+            #Centroid Computation
+            centroids = []
+            for cluster in clusters:
+                mean_vector = numpy.array([0.0 for i in range(64)])
+                for i in range(len(cluster)):
+                    mean_vector += numpy.array((train_data_list[cluster[i]]))
+                if len(cluster) > 0:
+                    mean_vector /= float(len(cluster))
+                centroids.append(mean_vector)
 
-        # 5: Reassign each center to the centroid's location.
-        old_centers = centers
-        centers = centroids
-        optimized = centers_check(old_centers, centers)
+            # 5: Reassign each center to the centroid's location.
+            old_centers = centers
+            centers = centroids
+            optimized = centers_check(old_centers, centers)
 
-    sse=sum_squared_error(clusters,centers,train_data_list)
-    print "Sum Squared Error: ",sse
-    sss=sum_squared_separation(clusters,centers)
-    print "Sum Squared Separation: ",sss
-    average_entropy = mean_entropy(clusters, train_data_labels)
-    print "Mean Entropy: ",average_entropy
+        sse=sum_squared_error(clusters,centers,train_data_list)
+        #print "Sum Squared Error: ",sse
+        sss=sum_squared_separation(clusters,centers)
+        #print "Sum Squared Separation: ",sss
+        average_entropy = mean_entropy(clusters, train_data_labels)
+        #print "Mean Entropy: ",average_entropy
+        
+        sse_array.append(sse)
+        sss_array.append(sss)
+        average_entropy_array.append(average_entropy)
+        centers_array.append(centers)
+        clusters_array.append(clusters)
+        
+    best_trial_idx=numpy.argmin(sse_array)
+    best_sse=sse_array[best_trial_idx]
+    print "Best Sum Squared Error: ",sse
+    best_sss=sss_array[best_trial_idx]
+    print "Best Sum Squared Separation: ",sss
+    best_average_entropy=average_entropy_array[best_trial_idx]
+    print "Best Mean Entropy: ",average_entropy
+    best_centers=centers_array[best_trial_idx]
+    best_clusters=clusters_array[best_trial_idx]
+        
+    cluster_labels=[most_popular_class(cluster,train_data_labels) for cluster in best_clusters]
+    classifications=[classify(best_centers,cluster_labels,datapoint) for datapoint in test_data_list]
+
+    confusion_matrix=create_confusion_matrix(classifications,test_data_labels)
+    save_confusion_matrix(confusion_matrix)
+
+    accuracy_value=accuracy(confusion_matrix)
+    print "Accuracy: ",accuracy_value
 
 #Main function
 def main():
+    global no_of_trials
     load_training_data()
     load_test_data()
-    k_means_clustering(10)
+    #Experiment 1
+    k_means_clustering(10,no_of_trials)
+    #Experiment 2
+    k_means_clustering(30,no_of_trials)
 
 
 if __name__ == "__main__":

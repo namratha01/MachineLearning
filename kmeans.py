@@ -5,9 +5,9 @@
 
 #Imports
 from __future__ import division
+from PIL import Image
 import itertools
 import numpy
-import sys
 
 no_of_clusters=10
 no_of_classes=10
@@ -141,6 +141,7 @@ def create_confusion_matrix(classifications,test_data_labels):
     return confusion_matrix
 
 def save_confusion_matrix(confusion_matrix):
+    global no_of_clusters
     filename='confusion_matrix_%d_clusters.csv'%(no_of_clusters)
     output = open(filename,'w')
     for row in confusion_matrix:
@@ -152,6 +153,20 @@ def save_confusion_matrix(confusion_matrix):
 def accuracy(confusion_matrix):
     m = numpy.array(confusion_matrix)
     return float(numpy.sum(numpy.diagonal(m))) / numpy.sum(m)
+
+def pixel_value(value):
+    value = int(numpy.floor(value))
+    return value * 16
+
+
+def draw_center_as_bitmap(name_prefix,center_number,center):
+    img = Image.new('L', (8, 8), "black")
+    center_2d = numpy.array(center).reshape(8, 8)
+    for i in range(img.size[0]):
+        for j in range(img.size[0]):
+            img.putpixel((j, i), pixel_value(int(center_2d[i][j])))
+    name = name_prefix + str(center_number) + '.png'
+    img.save(name)
 
 #
 def k_means_clustering(k,no_of_trials):
@@ -179,19 +194,29 @@ def k_means_clustering(k,no_of_trials):
                 clusters[closest_centers[i]].append(i)
 
             #Centroid Computation
+            #datasum=[[0 for i in range(64)] for i in range(no_of_clusters)]
+            #centroids=[[0 for i in range(64)] for i in range(no_of_clusters)]
+            #for idx,cluster in enumerate(clusters):
+            #    for datapoint in cluster:
+            #        datasum[idx]=datasum[idx]+train_data_list[datapoint]
+            #    if sum(datasum[idx])!=0:
+            #        centroids[idx]=numpy.true_divide(datasum[idx],len(cluster))
+
             centroids = []
             for cluster in clusters:
-                mean_vector = numpy.array([0.0 for i in range(64)])
+                mean_vector = numpy.array([0.0 for i in range(64)])  # sum feature
+                # values
                 for i in range(len(cluster)):
+                    # sum the features
                     mean_vector += numpy.array((train_data_list[cluster[i]]))
                 if len(cluster) > 0:
                     mean_vector /= float(len(cluster))
                 centroids.append(mean_vector)
 
             # 5: Reassign each center to the centroid's location.
-            old_centers = centers
-            centers = centroids
-            optimized = centers_check(old_centers, centers)
+            old_centers = numpy.asarray(centers)
+            centers = numpy.asarray(centroids)
+            optimized = centers_check(old_centers,centers)
 
         sse=sum_squared_error(clusters,centers,train_data_list)
         sss=sum_squared_separation(clusters,centers)
@@ -202,7 +227,7 @@ def k_means_clustering(k,no_of_trials):
         average_entropy_array.append(average_entropy)
         centers_array.append(centers)
         clusters_array.append(clusters)
-        
+    
     best_trial_idx=numpy.argmin(sse_array)
     best_sse=sse_array[best_trial_idx]
     print "Best Sum Squared Error: ",sse
@@ -213,6 +238,10 @@ def k_means_clustering(k,no_of_trials):
     best_centers=centers_array[best_trial_idx]
     best_clusters=clusters_array[best_trial_idx]
         
+    for i in range(no_of_clusters):
+        print "center: ",best_centers[i]
+        draw_center_as_bitmap('exp_%d_center_'%no_of_clusters,i,best_centers[i])
+    
     cluster_labels=[most_popular_class(cluster,train_data_labels) for cluster in best_clusters]
     classifications=[classify(best_centers,cluster_labels,datapoint) for datapoint in test_data_list]
 
@@ -225,12 +254,15 @@ def k_means_clustering(k,no_of_trials):
 #Main function
 def main():
     global no_of_trials
+    global no_of_clusters
     load_training_data()
     load_test_data()
     #Experiment 1
-    k_means_clustering(10,no_of_trials)
+    no_of_clusters=10
+    k_means_clustering(no_of_clusters,no_of_trials)
     #Experiment 2
-    k_means_clustering(30,no_of_trials)
+    no_of_clusters=30
+    k_means_clustering(no_of_clusters,no_of_trials)
 
 
 if __name__ == "__main__":

@@ -35,7 +35,7 @@ def load_test_data():
     test_data_list=test_data[:,:-1]
     test_data_labels=test_data[:,-1]
 
-#Initialize center 
+#Initialize centers 
 def initialize_centers(k):
     return [numpy.random.randint(0,16,64).tolist() for i in range(k)]
 
@@ -58,6 +58,7 @@ def closest_center(datapoint,centers,no_of_clusters=10):
             min_distances.append(i)
     return numpy.random.choice(min_distances)
 
+#Check if centers are almost same
 def centers_check(old_centers, centers):
     difference = 0
     for old_center, new_center in zip(old_centers, centers):
@@ -67,7 +68,7 @@ def centers_check(old_centers, centers):
         return True
     else:
         return False
-
+#Sum squared error computation
 def sum_squared_error(clusters,centers,train_data_list):
     error=0
     for center,cluster in zip(centers,clusters):
@@ -76,6 +77,7 @@ def sum_squared_error(clusters,centers,train_data_list):
             error+=distance(datapoint,center)**2
     return error
 
+#Sum squared separation computation
 def sum_squared_separation(clusters,centers):
     pairs=itertools.combinations([i for i in range(no_of_clusters)],2)
     separation=0
@@ -83,6 +85,7 @@ def sum_squared_separation(clusters,centers):
         separation+=distance(centers[pair[0]],centers[pair[1]])**2
     return separation
 
+#Entropy computation
 def entropy(cluster,labels):
     global no_of_classes
     entropy_sum=0
@@ -103,6 +106,7 @@ def entropy(cluster,labels):
         entropy_sum += product
     return -1 * entropy_sum
 
+#Mean entropy computation
 def mean_entropy(clusters,labels):
     datapoint_per_cluster=[len(cluster) for cluster in clusters]
     no_of_datapoints=sum(datapoint_per_cluster)
@@ -111,6 +115,7 @@ def mean_entropy(clusters,labels):
     mean=float(sum(weighted_entropies))/len(weighted_entropies)
     return mean
 
+#Find most popular clase to assign labels
 def most_popular_class(cluster,labels):
     class_representation_in_cluster = [0 for i in range(no_of_classes)]
     total_instances = len(cluster)
@@ -130,16 +135,19 @@ def most_popular_class(cluster,labels):
                     class_representation_in_cluster.index(c))
         return numpy.random.choice(indices_of_tied_classes)
 
+#Classification of data
 def classify(centers,cluster_labels,datapoint):
     closest = closest_center(datapoint,centers)
     return cluster_labels[closest]
 
+#Confusion matrix creation
 def create_confusion_matrix(classifications,test_data_labels):
     confusion_matrix=[[0 for i in range(no_of_classes)] for i in range(no_of_classes)]
     for label,classification in zip(test_data_labels,classifications):
         confusion_matrix[int(label)][int(classification)]+=1
     return confusion_matrix
 
+#Save confusion matrix to file
 def save_confusion_matrix(confusion_matrix):
     global no_of_clusters
     filename='confusion_matrix_%d_clusters.csv'%(no_of_clusters)
@@ -150,15 +158,17 @@ def save_confusion_matrix(confusion_matrix):
         output.write('\n')
     output.close()
 
+#Compute accuracy using confusion matrix
 def accuracy(confusion_matrix):
     m = numpy.array(confusion_matrix)
     return float(numpy.sum(numpy.diagonal(m))) / numpy.sum(m)
 
+#Compute pixel values
 def pixel_value(value):
     value = int(numpy.floor(value))
     return value * 16
 
-
+#Draw bitmap using center matrix
 def draw_center_as_bitmap(name_prefix,center_number,center):
     img = Image.new('L', (8, 8), "black")
     center_2d = numpy.array(center).reshape(8, 8)
@@ -168,6 +178,7 @@ def draw_center_as_bitmap(name_prefix,center_number,center):
     name = name_prefix + str(center_number) + '.png'
     img.save(name)
 
+#Assign labels to clusters and save to file
 def record_cluster_labels(filename,cluster_labels):
     cluster_labels_recorder = open(filename, 'w')
     cluster_labels_recorder.write('Labels of each cluster:\n')
@@ -179,8 +190,7 @@ def record_cluster_labels(filename,cluster_labels):
             cluster_labels_recorder.write('Cluster %d\'s label is None\n' %
                                           (i))
 
-
-#
+#K-Means Clustering Core code
 def k_means_clustering(k,no_of_trials):
     global train_data_list
     sse_array=[]

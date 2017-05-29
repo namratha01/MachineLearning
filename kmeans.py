@@ -194,11 +194,8 @@ def k_means_clustering(k,no_of_trials):
             optimized = centers_check(old_centers, centers)
 
         sse=sum_squared_error(clusters,centers,train_data_list)
-        #print "Sum Squared Error: ",sse
         sss=sum_squared_separation(clusters,centers)
-        #print "Sum Squared Separation: ",sss
         average_entropy = mean_entropy(clusters, train_data_labels)
-        #print "Mean Entropy: ",average_entropy
         
         sse_array.append(sse)
         sss_array.append(sss)

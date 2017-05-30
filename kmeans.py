@@ -68,22 +68,29 @@ def centers_check(old_centers, centers):
         return True
     else:
         return False
-#Sum squared error computation
-def sum_squared_error(clusters,centers,train_data_list):
+#Mean squared error computation
+def mean_squared_error(clusters,centers,train_data_list):
+    global no_of_clusters
     error=0
+    error_array=[]
     for center,cluster in zip(centers,clusters):
         for datapoint_idx in cluster:
             datapoint=train_data_list[datapoint_idx]
             error+=distance(datapoint,center)**2
+        if len(cluster)!=0:
+            error=error/len(cluster)
+        error_array.append(error)
+    average_mse=numpy.sum(error_array)/no_of_clusters
     return error
 
-#Sum squared separation computation
-def sum_squared_separation(clusters,centers):
+#Mean squared separation computation
+def mean_squared_separation(clusters,centers):
+    global no_of_clusters
     pairs=itertools.combinations([i for i in range(no_of_clusters)],2)
     separation=0
     for pair in pairs:
         separation+=distance(centers[pair[0]],centers[pair[1]])**2
-    return separation
+    return (2*separation)/(no_of_clusters*(no_of_clusters-1))
 
 #Entropy computation
 def entropy(cluster,labels):
@@ -164,18 +171,18 @@ def accuracy(confusion_matrix):
     return float(numpy.sum(numpy.diagonal(m))) / numpy.sum(m)
 
 #Compute pixel values
-def pixel_value(value):
+def pixel(value):
     value = int(numpy.floor(value))
     return value * 16
 
 #Draw bitmap using center matrix
-def draw_center_as_bitmap(name_prefix,center_number,center):
+def visualize(name,center_num,center):
     img = Image.new('L', (8, 8), "black")
     center_2d = numpy.array(center).reshape(8, 8)
     for i in range(img.size[0]):
         for j in range(img.size[0]):
-            img.putpixel((j, i), pixel_value(int(center_2d[i][j])))
-    name = name_prefix + str(center_number) + '.png'
+            img.putpixel((j, i), pixel(int(center_2d[i][j])))
+    name = name + str(center_num) + '.png'
     img.save(name)
 
 #Assign labels to clusters and save to file
@@ -193,8 +200,8 @@ def record_cluster_labels(filename,cluster_labels):
 #K-Means Clustering Core code
 def k_means_clustering(k,no_of_trials):
     global train_data_list
-    sse_array=[]
-    sss_array=[]
+    mse_array=[]
+    mss_array=[]
     average_entropy_array=[]
     centers_array=[]
     clusters_array=[]
@@ -229,28 +236,28 @@ def k_means_clustering(k,no_of_trials):
             centers = numpy.asarray(centroids)
             optimized = centers_check(old_centers,centers)
 
-        sse=sum_squared_error(clusters,centers,train_data_list)
-        sss=sum_squared_separation(clusters,centers)
+        mse=mean_squared_error(clusters,centers,train_data_list)
+        mss=mean_squared_separation(clusters,centers)
         average_entropy = mean_entropy(clusters, train_data_labels)
         
-        sse_array.append(sse)
-        sss_array.append(sss)
+        mse_array.append(mse)
+        mss_array.append(mss)
         average_entropy_array.append(average_entropy)
         centers_array.append(centers)
         clusters_array.append(clusters)
     
-    best_trial_idx=numpy.argmin(sse_array)
-    best_sse=sse_array[best_trial_idx]
-    print "Best Sum Squared Error: ",sse
-    best_sss=sss_array[best_trial_idx]
-    print "Best Sum Squared Separation: ",sss
+    best_trial_idx=numpy.argmin(mse_array)
+    best_mse=mse_array[best_trial_idx]
+    print "Best Average Mean Squared Error: ",best_mse
+    best_mss=mss_array[best_trial_idx]
+    print "Best Mean Squared Separation: ",best_mss
     best_average_entropy=average_entropy_array[best_trial_idx]
     print "Best Mean Entropy: ",average_entropy
     best_centers=centers_array[best_trial_idx]
     best_clusters=clusters_array[best_trial_idx]
-        
+
     for i in range(no_of_clusters):
-        draw_center_as_bitmap('K%d_center_'%no_of_clusters,i,best_centers[i])
+        visualize('K%d_center_'%no_of_clusters,i,best_centers[i])
     
     cluster_labels=[most_popular_class(cluster,train_data_labels) for cluster in best_clusters]
     classifications=[classify(best_centers,cluster_labels,datapoint) for datapoint in test_data_list]

@@ -1,11 +1,14 @@
-import numpy as np
-np.random.seed(1)
+from PIL import ImageTk as itk
+from PIL import Image
+import numpy
+numpy.random.seed(1)
 import Tkinter as tk
 import time
+import random
 
-UNIT = 40   # pixels
-MAZE_H = 10  # grid height
-MAZE_W = 10  # grid width
+UNIT=60     # pixels
+MAZE_H=10   # grid height
+MAZE_W=10   # grid width
 
 canvas = tk.Canvas(bg='white',height=MAZE_H*UNIT,width=MAZE_W*UNIT)
 
@@ -16,23 +19,21 @@ for r in range(0,MAZE_H*UNIT,UNIT):
     x0,y0,x1,y1=0,r,MAZE_H*UNIT,r
     canvas.create_line(x0,y0,x1,y1)
 
-origin = np.array([20,20])
+origin=numpy.array([20,20])
 
-# hell
-hell1_center = origin + np.array([UNIT * 2, UNIT])
-hell1 = canvas.create_rectangle(hell1_center[0] - 15, hell1_center[1] - 15,hell1_center[0] + 15, hell1_center[1] + 15,fill='black')
-# hell
-hell2_center = origin + np.array([UNIT, UNIT * 2])
-hell2 = canvas.create_rectangle(hell2_center[0] - 15, hell2_center[1] - 15,hell2_center[0] + 15, hell2_center[1] + 15,fill='black')
-# create oval
-oval_center = origin + UNIT * 2
-oval = canvas.create_oval(oval_center[0] - 15, oval_center[1] - 15,oval_center[0] + 15, oval_center[1] + 15,fill='yellow')
-# create red rect
-rect = canvas.create_rectangle(origin[0] - 15, origin[1] - 15,origin[0] + 15, origin[1] + 15,fill='red')
+#Can Placement
+for j in range(0,10):
+    can_center=origin+numpy.array([UNIT*j,UNIT*j])
+    can=canvas.create_rectangle(can_center[0]-5,can_center[1]-5,can_center[0]+25,can_center[1]+25,fill='black')
+
+#terminator
+t_center=origin+numpy.array([UNIT*5, UNIT*3])
+terminator=itk.PhotoImage(Image.open("/home/manas/Projects/Namratha/MachineLearning/terminator.gif"))
+t2=canvas.create_image(30,30,image=terminator)
 
 def moveit():
     for i in range(1,10):
-        canvas.move(rect,40,40)  # move agent
+        canvas.move(t2,UNIT,UNIT)
         canvas.update_idletasks()
         time.sleep(1)
 

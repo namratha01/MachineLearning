@@ -32,11 +32,32 @@ terminator=itk.PhotoImage(Image.open("/home/manas/Projects/Namratha/MachineLearn
 t2=canvas.create_image(30,30,image=terminator)
 
 def moveit():
-    for i in range(1,10):
+    for i in range(1,5):
         canvas.move(t2,UNIT,UNIT)
         canvas.update_idletasks()
         time.sleep(1)
 
+def manual():
+    for i in range(0,4):
+        direction=i
+        if direction==0:    #Left
+            canvas.move(t2,-UNIT,0)
+            canvas.update_idletasks()
+            time.sleep(1)
+        elif direction==1:  #Right
+            canvas.move(t2,UNIT,0)
+            canvas.update_idletasks()
+            time.sleep(1)
+        elif direction==2:  #Up
+            canvas.move(t2,0,-UNIT)
+            canvas.update_idletasks()
+            time.sleep(1)
+        elif direction==3:  #Down
+            canvas.move(t2,0,UNIT)
+            canvas.update_idletasks()
+            time.sleep(1)
+
 canvas.pack()
 canvas.after(1000,moveit)
+canvas.after(1000,manual)
 canvas.mainloop()

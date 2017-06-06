@@ -19,7 +19,26 @@ reward=[-5,-1,10]
 actions=[0,1,2,3,4]   # actions = ['up', 'down', 'right', 'left', 'pick']
 dry_spell=0
 
+UNIT=60     # pixels
+MAZE_H=10   # grid height
+MAZE_W=10   # grid width
+#t2=0
 
+canvas = tk.Canvas(bg='white',height=MAZE_H*UNIT,width=MAZE_W*UNIT)
+
+for c in range(0,MAZE_W*UNIT,UNIT):
+    x0,y0,x1,y1=c,0,c,MAZE_H*UNIT
+    canvas.create_line(x0,y0,x1,y1)
+for r in range(0,MAZE_H*UNIT,UNIT):
+    x0,y0,x1,y1=0,r,MAZE_H*UNIT,r
+    canvas.create_line(x0,y0,x1,y1)
+
+origin=numpy.array([20,20])
+
+#Can Placement
+for j in range(0,10):
+    can_center=origin+numpy.array([UNIT*j,UNIT*j])
+    can=canvas.create_rectangle(can_center[0]-5,can_center[1]-5,can_center[0]+25,can_center[1]+25,fill='black')
 
 def initialize_grid():
     grid=numpy.random.choice([1,2],[10,10])
@@ -41,6 +60,7 @@ def select_action(qmatrix,state,epsilon):
     return action
 
 def commit_action(state,action,gamma,eta,step_cost,relocate,grid,loc_R,qmatrix,mode):
+    #global t2
     if action==4:						# If action is 'pick'
         r=reward[int(grid[loc_R])] + step_cost	# Assign reward based on value for 'HERE'
 	grid[loc_R] = 1					# Assign value of 'HERE' as empty
@@ -57,13 +77,22 @@ def commit_action(state,action,gamma,eta,step_cost,relocate,grid,loc_R,qmatrix,m
     else:
         if action==0:
             new_loc = tuple(list(numpy.asarray(loc_R)+numpy.array([-1, 0])))
+            #canvas.move(t2,-UNIT,0)
+            canvas.update_idletasks()
         elif action==1:
             new_loc = tuple(list(numpy.asarray(loc_R)+numpy.array([1, 0])))
+            #canvas.move(t2,UNIT,0)
+            canvas.update_idletasks()
         elif action==2:
             new_loc = tuple(list(numpy.asarray(loc_R)+numpy.array([0, 1])))
+            #canvas.move(t2,0,UNIT)
+            canvas.update_idletasks()
         elif action==3:
             new_loc = tuple(list(numpy.asarray(loc_R)+numpy.array([0, -1])))
-        
+            #canvas.move(t2,0,-UNIT)
+            canvas.update_idletasks()
+        time.sleep(0.2)
+
         if grid[new_loc]==0:
             r=reward[int(grid[new_loc])]+step_cost 
             if mode=='train':
@@ -88,14 +117,20 @@ def plot_rewards(episode_reward_list, num_episodes, exp):
 
 def qlearn(qmatrix,mode,exp='Exp',gamma=0.9,eta=0.2,l_mode='const',step_cost=0,relocate=False,epsilon=1,e_mode='var',style='grid'):
     global no_of_episodes
+    #global t2
     episode_reward_array=[]
     for episode in range(no_of_episodes):
+        terminator=itk.PhotoImage(Image.open("/home/manas/Projects/Namratha/MachineLearning/terminator.gif"))
+        t2=canvas.create_image(30,30,image=terminator)
+        
         if episode%50==0 and episode>0:
             if epsilon>0.1 and e_mode=='var':
                 epsilon-=0.01
             if eta>0.1 and l_mode=='decay':
                 eta-=0.04
         grid,robby_loc=initialize_grid()
+        print robby_loc
+        canvas.move(t2,UNIT*(robby_loc[0]-1),UNIT*(robby_loc[1]-1))
         episode_reward=0
         for step in range(no_of_steps):
             current_state=analyze_state(robby_loc,grid)
@@ -105,12 +140,17 @@ def qlearn(qmatrix,mode,exp='Exp',gamma=0.9,eta=0.2,l_mode='const',step_cost=0,r
 
 	if mode is 'test'or(mode is 'train'and(episode%100==0 or episode==no_of_episodes-1)):
 	    episode_reward_array.append(episode_reward) 
+        
+        canvas.delete(t2)
+
+
     if mode is 'train':
         num_episodes=numpy.concatenate((numpy.arange(0,no_of_episodes,100),[no_of_episodes-1]),axis=0)
 	plot_rewards(episode_reward_array,num_episodes,exp)
     elif mode is 'test':
         print "\tTest Average: ",numpy.mean(episode_reward_array),"\tTest Standard Deviation: ",numpy.std(episode_reward_array)
     
+
     return qmatrix
 
 def main():
@@ -139,4 +179,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    #main()
+    canvas.pack()
+    canvas.after(1000,main)
+    canvas.mainloop()

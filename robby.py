@@ -22,7 +22,6 @@ dry_spell=0
 UNIT=60     # pixels
 MAZE_H=10   # grid height
 MAZE_W=10   # grid width
-#t2=0
 
 canvas = tk.Canvas(bg='white',height=MAZE_H*UNIT,width=MAZE_W*UNIT)
 
@@ -36,9 +35,9 @@ for r in range(0,MAZE_H*UNIT,UNIT):
 origin=numpy.array([20,20])
 
 #Can Placement
-for j in range(0,10):
-    can_center=origin+numpy.array([UNIT*j,UNIT*j])
-    can=canvas.create_rectangle(can_center[0]-5,can_center[1]-5,can_center[0]+25,can_center[1]+25,fill='black')
+#for j in range(0,10):
+#    can_center=origin+numpy.array([UNIT*j,UNIT*j])
+#    can=canvas.create_rectangle(can_center[0]-5,can_center[1]-5,can_center[0]+25,can_center[1]+25,fill='black')
 
 def initialize_grid():
     grid=numpy.random.choice([1,2],[10,10])
@@ -59,11 +58,15 @@ def select_action(qmatrix,state,epsilon):
     action = numpy.random.choice([best_action,numpy.random.choice(5, 1)[0]],1,p=[(1-epsilon),epsilon]) 
     return action
 
-def commit_action(state,action,gamma,eta,step_cost,relocate,grid,loc_R,qmatrix,mode):
-    #global t2
-    if action==4:						# If action is 'pick'
-        r=reward[int(grid[loc_R])] + step_cost	# Assign reward based on value for 'HERE'
-	grid[loc_R] = 1					# Assign value of 'HERE' as empty
+def commit_action(state,action,gamma,eta,step_cost,relocate,grid,loc_R,qmatrix,mode,t2):
+    time.sleep(2)
+    if action==4:
+        #blank_center=origin+numpy.array([UNIT*loc_R[0],UNIT*loc_R[1]])
+        #blank=canvas.create_rectangle(blank_center[0]-5,blank_center[1]-5,blank_center[0]+25,blank_center[1]+25,fill='blue')
+        canvas.move(t2,0,0)
+        canvas.update_idletasks()
+        r=reward[int(grid[loc_R])] + step_cost
+	grid[loc_R] = 1
 	if relocate==True and r==-1:
 	    global dry_spell
 	    dry_spell += 1
@@ -77,22 +80,24 @@ def commit_action(state,action,gamma,eta,step_cost,relocate,grid,loc_R,qmatrix,m
     else:
         if action==0:
             new_loc = tuple(list(numpy.asarray(loc_R)+numpy.array([-1, 0])))
-            #canvas.move(t2,-UNIT,0)
+            if loc_R[0]>1:
+                canvas.move(t2,-UNIT,0)
             canvas.update_idletasks()
         elif action==1:
             new_loc = tuple(list(numpy.asarray(loc_R)+numpy.array([1, 0])))
-            #canvas.move(t2,UNIT,0)
+            if loc_R[0]<10:
+                canvas.move(t2,UNIT,0)
             canvas.update_idletasks()
         elif action==2:
             new_loc = tuple(list(numpy.asarray(loc_R)+numpy.array([0, 1])))
-            #canvas.move(t2,0,UNIT)
+            if loc_R[1]<10:
+                canvas.move(t2,0,UNIT)
             canvas.update_idletasks()
         elif action==3:
             new_loc = tuple(list(numpy.asarray(loc_R)+numpy.array([0, -1])))
-            #canvas.move(t2,0,-UNIT)
+            if loc_R[1]>1:
+                canvas.move(t2,0,-UNIT)
             canvas.update_idletasks()
-        time.sleep(0.2)
-
         if grid[new_loc]==0:
             r=reward[int(grid[new_loc])]+step_cost 
             if mode=='train':
@@ -104,6 +109,7 @@ def commit_action(state,action,gamma,eta,step_cost,relocate,grid,loc_R,qmatrix,m
             if mode=='train':
                 qmatrix[int(state),action[0]]+=eta*(r+gamma*(numpy.amax(qmatrix[int(new_state),:]))-qmatrix[int(state),action[0]])
             state=new_state
+    print "Location: ",loc_R,"Action: ",action,"T2 Coords: ",canvas.coords(t2)
     return state,grid,loc_R,qmatrix,r
 
 def plot_rewards(episode_reward_list, num_episodes, exp):
@@ -129,13 +135,14 @@ def qlearn(qmatrix,mode,exp='Exp',gamma=0.9,eta=0.2,l_mode='const',step_cost=0,r
             if eta>0.1 and l_mode=='decay':
                 eta-=0.04
         grid,robby_loc=initialize_grid()
-        print robby_loc
+        print "Initial Location: ",robby_loc
         canvas.move(t2,UNIT*(robby_loc[0]-1),UNIT*(robby_loc[1]-1))
         episode_reward=0
         for step in range(no_of_steps):
             current_state=analyze_state(robby_loc,grid)
             action=select_action(qmatrix,current_state,epsilon)
-            current_state,grid,robby_loc,qmatrix,reward=commit_action(current_state,action,gamma,eta,step_cost,relocate,grid,robby_loc,qmatrix,"train")
+            current_state,grid,robby_loc,qmatrix,reward=commit_action(current_state,action,gamma,eta,step_cost,relocate,grid,robby_loc,qmatrix,"train",t2)
+            #print "Location: ",robby_loc,"Action: ",action
             episode_reward+=reward
 
 	if mode is 'test'or(mode is 'train'and(episode%100==0 or episode==no_of_episodes-1)):

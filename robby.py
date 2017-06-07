@@ -4,6 +4,7 @@
 @Des   : Q-Learning (Robby the Robot)
 """
 #Imports
+import sys
 from PIL import ImageTk as itk
 from PIL import Image
 import numpy
@@ -13,7 +14,7 @@ import random
 import matplotlib.pyplot as pyplot
 
 #
-no_of_episodes=5000
+no_of_episodes=5
 no_of_steps=200
 reward=[-5,-1,10]
 actions=[0,1,2,3,4]   # actions = ['up', 'down', 'right', 'left', 'pick']
@@ -25,26 +26,32 @@ MAZE_W=10   # grid width
 
 canvas = tk.Canvas(bg='white',height=MAZE_H*UNIT,width=MAZE_W*UNIT)
 
-for c in range(0,MAZE_W*UNIT,UNIT):
-    x0,y0,x1,y1=c,0,c,MAZE_H*UNIT
-    canvas.create_line(x0,y0,x1,y1)
-for r in range(0,MAZE_H*UNIT,UNIT):
-    x0,y0,x1,y1=0,r,MAZE_H*UNIT,r
-    canvas.create_line(x0,y0,x1,y1)
-
 origin=numpy.array([20,20])
 
-#Can Placement
-#for j in range(0,10):
-#    can_center=origin+numpy.array([UNIT*j,UNIT*j])
-#    can=canvas.create_rectangle(can_center[0]-5,can_center[1]-5,can_center[0]+25,can_center[1]+25,fill='black')
-
 def initialize_grid():
-    grid=numpy.random.choice([1,2],[10,10])
-    grid=numpy.concatenate((numpy.zeros((10,1)),grid,numpy.zeros((10,1))),axis=1)
-    grid=numpy.concatenate((numpy.zeros((1,12)),grid,numpy.zeros((1,12))),axis=0)
-    robby_loc_init=tuple(list((numpy.random.choice(numpy.arange(1,11),2))))
-    return grid,robby_loc_init
+    grid = numpy.zeros((12,10))
+    style='field'
+    if style=='field': 
+	grid[numpy.arange(1,11),:]=numpy.random.choice([1,2],(10,10),replace=True, p=[0.5, 0.5])
+    elif style=='maze':
+	grid[numpy.arange(1,11), :] = numpy.random.choice([0, 1, 2], (10, 10), replace=True, p=[0.2, 0.4, 0.4])
+    grid = numpy.concatenate((numpy.zeros((12, 1)), grid, numpy.zeros((12, 1))), axis=1)
+    loc_R = tuple(list((numpy.random.choice(numpy.arange(1, 11), 2))))
+    for c in range(0,MAZE_W*UNIT,UNIT):
+        x0,y0,x1,y1=c,0,c,MAZE_H*UNIT
+        canvas.create_line(x0,y0,x1,y1)
+    for r in range(0,MAZE_H*UNIT,UNIT):
+        x0,y0,x1,y1=0,r,MAZE_H*UNIT,r
+        canvas.create_line(x0,y0,x1,y1)
+
+    origin=numpy.array([20,20])
+    for i in range(1,MAZE_H+1):
+        for j in range(1,MAZE_W+1):
+            if grid[i][j]==2:
+                can_center=origin+numpy.array([UNIT*(j-1),UNIT*(i-1)])
+                can=canvas.create_rectangle(can_center[0]-5,can_center[1]-5,can_center[0]+25,can_center[1]+25,fill='black')
+
+    return grid, loc_R	
 
 def analyze_state(robby_loc,grid):
     base3=numpy.array([81, 27, 9, 3, 1])
@@ -59,10 +66,11 @@ def select_action(qmatrix,state,epsilon):
     return action
 
 def commit_action(state,action,gamma,eta,step_cost,relocate,grid,loc_R,qmatrix,mode,t2):
-    time.sleep(2)
+    #time.sleep(0.01)
     if action==4:
-        #blank_center=origin+numpy.array([UNIT*loc_R[0],UNIT*loc_R[1]])
-        #blank=canvas.create_rectangle(blank_center[0]-5,blank_center[1]-5,blank_center[0]+25,blank_center[1]+25,fill='blue')
+        blank_center=origin+numpy.array([UNIT*(loc_R[0]-1),UNIT*(loc_R[1]-1)])
+        blank=canvas.create_rectangle(blank_center[0]-5,blank_center[1]-5,blank_center[0]+25,blank_center[1]+25,fill='white')
+        #print "Can Location: ",loc_R,"Blank center: ",(blank_center-20)/60
         canvas.move(t2,0,0)
         canvas.update_idletasks()
         r=reward[int(grid[loc_R])] + step_cost
@@ -109,7 +117,7 @@ def commit_action(state,action,gamma,eta,step_cost,relocate,grid,loc_R,qmatrix,m
             if mode=='train':
                 qmatrix[int(state),action[0]]+=eta*(r+gamma*(numpy.amax(qmatrix[int(new_state),:]))-qmatrix[int(state),action[0]])
             state=new_state
-    print "Location: ",loc_R,"Action: ",action,"T2 Coords: ",canvas.coords(t2)
+    #print "Location: ",loc_R,"Action: ",action,"T2 Coords: ",canvas.coords(t2)
     return state,grid,loc_R,qmatrix,r
 
 def plot_rewards(episode_reward_list, num_episodes, exp):
@@ -123,9 +131,10 @@ def plot_rewards(episode_reward_list, num_episodes, exp):
 
 def qlearn(qmatrix,mode,exp='Exp',gamma=0.9,eta=0.2,l_mode='const',step_cost=0,relocate=False,epsilon=1,e_mode='var',style='grid'):
     global no_of_episodes
-    #global t2
     episode_reward_array=[]
     for episode in range(no_of_episodes):
+        sys.stdout.write("\rEpisode: %d"%episode)
+        sys.stdout.flush()
         terminator=itk.PhotoImage(Image.open("/home/manas/Projects/Namratha/MachineLearning/terminator.gif"))
         t2=canvas.create_image(30,30,image=terminator)
         
@@ -135,21 +144,21 @@ def qlearn(qmatrix,mode,exp='Exp',gamma=0.9,eta=0.2,l_mode='const',step_cost=0,r
             if eta>0.1 and l_mode=='decay':
                 eta-=0.04
         grid,robby_loc=initialize_grid()
-        print "Initial Location: ",robby_loc
+        #print "Initial Location: ",robby_loc
         canvas.move(t2,UNIT*(robby_loc[0]-1),UNIT*(robby_loc[1]-1))
         episode_reward=0
         for step in range(no_of_steps):
+            #print "Step: ",step
             current_state=analyze_state(robby_loc,grid)
             action=select_action(qmatrix,current_state,epsilon)
             current_state,grid,robby_loc,qmatrix,reward=commit_action(current_state,action,gamma,eta,step_cost,relocate,grid,robby_loc,qmatrix,"train",t2)
-            #print "Location: ",robby_loc,"Action: ",action
             episode_reward+=reward
-
+        
 	if mode is 'test'or(mode is 'train'and(episode%100==0 or episode==no_of_episodes-1)):
 	    episode_reward_array.append(episode_reward) 
         
-        canvas.delete(t2)
-
+        canvas.delete("all")
+    #canvas.delete(ALL)
 
     if mode is 'train':
         num_episodes=numpy.concatenate((numpy.arange(0,no_of_episodes,100),[no_of_episodes-1]),axis=0)
@@ -168,25 +177,27 @@ def main():
     qlearn(qmatrix,mode='test',epsilon=0.1,e_mode='const')
 
     #Experiment 2
-    print "Experiment 2"
+    #print "Experiment 2"
 
 
     #Experiment 3
-    print "Experiment 3"
+    #print "Experiment 3"
 
 
     #Experiment 4
-    print "Experiment 4"
+    #print "Experiment 4"
 
 
     #Experiment 5
-    print "Experiment 5"
-
-
-
+    #print "Experiment 5"
 
 if __name__ == "__main__":
     #main()
     canvas.pack()
-    canvas.after(1000,main)
+    canvas.after(0,main)
+    #canvas.after(0)
     canvas.mainloop()
+
+
+
+

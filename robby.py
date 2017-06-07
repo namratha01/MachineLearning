@@ -13,8 +13,8 @@ import time
 import random
 import matplotlib.pyplot as pyplot
 
-#
-no_of_episodes=5
+#Variables
+no_of_episodes=5000
 no_of_steps=200
 reward=[-5,-1,10]
 actions=[0,1,2,3,4]   # actions = ['up', 'down', 'right', 'left', 'pick']
@@ -191,13 +191,13 @@ def main():
     #Experiment 5
     #print "Experiment 5"
 
-if __name__ == "__main__":
-    #main()
-    canvas.pack()
-    canvas.after(0,main)
-    #canvas.after(0)
-    canvas.mainloop()
+#if __name__ == "__main__":
+#    canvas.pack()
+#    canvas.after(0,main)
+#    canvas.mainloop()
 
-
+canvas.pack()
+canvas.after(0,main)
+canvas.mainloop()
 
 

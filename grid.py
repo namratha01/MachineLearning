@@ -57,6 +57,8 @@ def manual():
             canvas.update_idletasks()
             time.sleep(1)
 
+print canvas.find_all()
+
 canvas.pack()
 canvas.after(1000,moveit)
 canvas.after(1000,manual)

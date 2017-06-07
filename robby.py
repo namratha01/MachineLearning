@@ -66,7 +66,7 @@ def select_action(qmatrix,state,epsilon):
     return action
 
 def commit_action(state,action,gamma,eta,step_cost,relocate,grid,loc_R,qmatrix,mode,t2):
-    #time.sleep(0.01)
+    #time.sleep(0.1)
     if action==4:
         blank_center=origin+numpy.array([UNIT*(loc_R[0]-1),UNIT*(loc_R[1]-1)])
         blank=canvas.create_rectangle(blank_center[0]-5,blank_center[1]-5,blank_center[0]+25,blank_center[1]+25,fill='white')

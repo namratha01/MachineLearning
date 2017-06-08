@@ -35,9 +35,9 @@ def initialize_grid():
     grid = numpy.zeros((12,10))
     style='field'
     if style=='field': 
-	grid[numpy.arange(1,11),:]=numpy.random.choice([1,2],(10,10),replace=True, p=[0.5, 0.5])
+        grid[numpy.arange(1,11),:]=numpy.random.choice([1,2],(10,10),replace=True, p=[0.5, 0.5])
     elif style=='maze':
-	grid[numpy.arange(1,11), :] = numpy.random.choice([0, 1, 2], (10, 10), replace=True, p=[0.2, 0.4, 0.4])
+        grid[numpy.arange(1,11), :] = numpy.random.choice([0, 1, 2], (10, 10), replace=True, p=[0.2, 0.4, 0.4])
     grid = numpy.concatenate((numpy.zeros((12, 1)), grid, numpy.zeros((12, 1))), axis=1)
     loc_R = tuple(list((numpy.random.choice(numpy.arange(1, 11), 2))))
     for c in range(0,MAZE_W*UNIT,UNIT):
@@ -54,7 +54,7 @@ def initialize_grid():
                 can_center=origin+numpy.array([UNIT*(j-1),UNIT*(i-1)])
                 can=canvas.create_rectangle(can_center[0]-5,can_center[1]-5,can_center[0]+25,can_center[1]+25,fill='black')
 
-    return grid, loc_R	
+    return grid, loc_R        
 
 def analyze_state(robby_loc,grid):
     base3=numpy.array([81, 27, 9, 3, 1])
@@ -78,17 +78,17 @@ def commit_action(state,action,gamma,eta,step_cost,relocate,grid,loc_R,qmatrix,m
         canvas.move(t2,0,0)
         canvas.update_idletasks()
         r=reward[int(grid[loc_R])] + step_cost
-	grid[loc_R] = 1
-	if relocate==True and r==-1:
-	    global dry_spell
-	    dry_spell += 1
-	    if dry_spell>=20:
-	        loc_R = tuple(list((numpy.random.choice(numpy.arange(1, 11), 2))))
-		dry_spell = 0 
-	new_state = analyze_state(loc_R, grid)
-	if mode=='train':
-	    qmatrix[int(state),action[0]]+=eta*(r+gamma*(numpy.amax(qmatrix[int(new_state),:]))-qmatrix[int(state),action[0]])
-	    state = new_state
+        grid[loc_R] = 1
+        if relocate==True and r==-1:
+            global dry_spell
+            dry_spell += 1
+            if dry_spell>=20:
+                loc_R = tuple(list((numpy.random.choice(numpy.arange(1, 11), 2))))
+                dry_spell = 0 
+        new_state = analyze_state(loc_R, grid)
+        if mode=='train':
+            qmatrix[int(state),action[0]]+=eta*(r+gamma*(numpy.amax(qmatrix[int(new_state),:]))-qmatrix[int(state),action[0]])
+            state = new_state
     else:
         if action==0:
             new_loc = tuple(list(numpy.asarray(loc_R)+numpy.array([-1, 0])))
@@ -161,15 +161,15 @@ def qlearn(qmatrix,mode,exp='Exp',gamma=0.9,eta=0.2,l_mode='const',step_cost=0,r
             if action_r is not None:
                 episode_reward+=-0.5
         
-	if mode is 'test'or(mode is 'train'and(episode%100==0 or episode==no_of_episodes-1)):
-	    episode_reward_array.append(episode_reward) 
+        if mode is 'test'or(mode is 'train'and(episode%100==0 or episode==no_of_episodes-1)):
+            episode_reward_array.append(episode_reward) 
         
         canvas.delete("all")
     #canvas.delete(ALL)
 
     if mode is 'train':
         num_episodes=numpy.concatenate((numpy.arange(0,no_of_episodes,100),[no_of_episodes-1]),axis=0)
-	plot_rewards(episode_reward_array,num_episodes,exp,eta,epsilon,gamma)
+        plot_rewards(episode_reward_array,num_episodes,exp,eta,epsilon,gamma)
     elif mode is 'test':
         print "\tTest Average: ",numpy.mean(episode_reward_array),"\tTest Standard Deviation: ",numpy.std(episode_reward_array)
     

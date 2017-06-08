@@ -20,7 +20,7 @@ reward=[-5,-1,10]
 actions=[0,1,2,3,4]   # actions = ['up', 'down', 'right', 'left', 'pick']
 dry_spell=0
 eta_array=[0.2,0.4,0.6,0.8,1]
-epsilon_array=[0,0.25,0.5,0.75,1]
+#epsilon_array=[0,0.25,0.5,0.75,1]
 
 
 UNIT=60     # pixels
@@ -179,29 +179,29 @@ def qlearn(qmatrix,mode,exp='Exp',gamma=0.9,eta=0.2,l_mode='const',step_cost=0,r
 def main():
     #Experiment 1
     print "Experiment 1"
-    qmatrix=numpy.zeros((3**5,5))
-    qmatrix=qlearn(qmatrix,mode='train',exp='Exp_1.png')
-    qlearn(qmatrix,mode='test',epsilon=0,e_mode='const')
+    #qmatrix=numpy.zeros((3**5,5))
+    #qmatrix=qlearn(qmatrix,mode='train',exp='Exp_1.png')
+    #qlearn(qmatrix,mode='test',epsilon=0,e_mode='const')
 
     #Experiment 2
     print "Experiment 2"
-    for eta in eta_array:
-        qmatrix=numpy.zeros((3**5,5))
-        qmatrix=qlearn(qmatrix,mode='train',exp='Exp_2_eta_%2.1f.png'%eta)
-        qlearn(qmatrix,mode='test',eta=eta)
+    #for eta in eta_array:
+    #    qmatrix=numpy.zeros((3**5,5))
+    #    qmatrix=qlearn(qmatrix,mode='train',eta=eta,exp='Exp_2_eta_%2.1f.png'%eta)
+    #    qlearn(qmatrix,mode='test',epsilon=0,e_mode='const',eta=eta)
 
     #Experiment 3
     print "Experiment 3"
-    for epsilon in epsilon_array:
-        qmatrix=numpy.zeros((3**5,5))
-        qmatrix=qlearn(qmatrix,mode='train',exp='Exp_3_epsilon_%2.1f.png'%epsilon)
-        qlearn(qmatrix,mode='test',epsilon=epsilon,e_mode='const')
+    #for epsilon in epsilon_array:
+        #qmatrix=numpy.zeros((3**5,5))
+        #qmatrix=qlearn(qmatrix,mode='train',epsilon=epsilon,exp='Exp_3_epsilon_%2.1f.png'%epsilon)
+        #qlearn(qmatrix,mode='test',epsilon=epsilon,e_mode='const')
 
     #Experiment 4
     print "Experiment 4"
     qmatrix=numpy.zeros((3**5,5))
-    qmatrix=qlearn(qmatrix,mode='train',exp='Exp_4.png')
-    qlearn(qmatrix,mode='test',epsilon=0,e_mode='const',action_r=True)
+    qmatrix=qlearn(qmatrix,mode='train',step_cost=-0.5,exp='Exp_4.png')
+    qlearn(qmatrix,mode='test',epsilon=0,e_mode='const',step_cost=-0.5)
 
     #Experiment 5
     #print "Experiment 5"
